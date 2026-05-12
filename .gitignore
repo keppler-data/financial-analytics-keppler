@@ -3,3 +3,4 @@
 **/logs
 master/dags
 airflow/
+**/.env.save
