@@ -1,0 +1,48 @@
+orchestration:
+  # Parallelism settings
+  parallelism:
+    max_active_runs: 3
+    max_task_instances: 32
+    
+  # Retry policy
+  retry_policy:
+    default_retries: 2
+    retry_delay_minutes: 5
+    retry_delay_exponential_base: 2
+    
+  # Timeout settings
+  timeouts:
+    default_task_timeout_minutes: 60
+    default_dag_timeout_minutes: 1440
+    
+  # Concurrency pools
+  pools:
+    - name: default
+      slots: 128
+      description: Default pool for all tasks
+      
+    - name: spark_jobs
+      slots: 16
+      description: Pool for Spark jobs
+      
+    - name: database_jobs
+      slots: 8
+      description: Pool for database operations
+      
+  # Task dependencies
+  dependencies:
+    - from: bronze
+      to: silver
+      type: data_driven
+      
+    - from: silver
+      to: intermediate
+      type: data_driven
+      
+    - from: intermediate
+      to: gold
+      type: data_driven
+      
+    - from: gold
+      to: diamond
+      type: data_driven

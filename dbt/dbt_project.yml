@@ -1,0 +1,83 @@
+# -*- coding: utf-8 -*-
+"""
+dbt Configuration File
+Defines project structure, compilation settings, and macro configurations
+"""
+
+# Project name
+name: 'financial_risk_models'
+version: '1.0.0'
+
+# dbt packages/versions
+dbt-version: ['>=1.7.0', '<2.0.0']
+python-version: '3.10'
+
+# Project repository
+config-version: 2
+
+# Profile and model paths
+profile: 'financial_risk_models'
+model-paths: ['models']
+analysis-paths: ['analysis']
+test-paths: ['tests']
+data-paths: ['data']
+macro-paths: ['macros']
+snapshot-paths: ['snapshots']
+target-path: 'target'
+clean-targets:
+  - 'target'
+  - 'dbt_packages'
+
+# Variable definitions
+vars:
+  start_date: '2024-01-01'
+  end_date: '2024-12-31'
+  default_schema: 'analytics'
+  
+# Model configurations
+models:
+  financial_risk_models:
+    # Enable source freshness checks
+    source_freshness_check: true
+    
+    # Default configuration
+    materialized: table
+    
+    # Staging
+    staging:
+      materialized: ephemeral
+      +schema: 'staging'
+      
+    # Intermediate
+    intermediate:
+      materialized: table
+      +schema: 'intermediate'
+      
+    # Marts
+    marts:
+      materialized: table
+      +schema: 'marts'
+      
+      facts:
+        materialized: incremental
+        
+      dimensions:
+        materialized: table
+
+# Seed configurations
+seeds:
+  +quote_columns: false
+
+# Test configurations
+tests:
+  +tags: ['daily']
+
+# Snapshot configurations
+snapshots:
+  +target_schema: 'snapshots'
+
+# Metrics configuration
+metrics:
+  - name: default_rate
+    description: 'Portfolio default rate'
+    model: 'kpi_default_rate'

@@ -1,0 +1,38 @@
+version: 2
+
+# Sources configuration
+sources:
+  - name: bronze
+    description: "Bronze layer - raw data"
+    tables:
+      - name: applications
+        description: "Raw application data"
+      - name: payments
+        description: "Raw payment transactions"
+      - name: collections
+        description: "Raw collections data"
+      
+  - name: silver
+    description: "Silver layer - cleaned data"
+    tables:
+      - name: dim_customers
+        description: "Customer dimension"
+      - name: dim_dates
+        description: "Date dimension"
+
+# Staging models
+models:
+  - name: stg_applications
+    description: "Staging: applications"
+    columns:
+      - name: application_id
+        description: "Unique application identifier"
+        data_type: string
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Customer identifier"
+        data_type: string
+        tests:
+          - not_null
