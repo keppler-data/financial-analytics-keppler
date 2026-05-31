@@ -1,0 +1,16 @@
+{
+"dataset_name": "customers",
+"versions": {
+    "v1": {
+    "version": "1.0.0",
+    "effective_date": "2026-05-21",
+    "fields": {
+        "customer_id": {"type": "string", "nullable": false},
+        "first_name": {"type": "string", "nullable": false},
+        "last_name": {"type": "string", "nullable": false},
+        "email": {"type": "string", "nullable": true},
+        "created_at": {"type": "string", "nullable": false}
+    }
+    }
+}
+}
