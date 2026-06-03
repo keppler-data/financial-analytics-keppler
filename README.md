@@ -1,176 +1,354 @@
-# Data Platform 🚀
+# Financial Risk Data Platform
 
-Plataforma distribuida basada en **Apache Airflow + Celery** para desplegar rápidamente un cluster de orquestación de pipelines de datos.
+## Overview
 
-Este proyecto permite levantar una arquitectura desacoplada con:
+Financial Risk Data Platform is a modern Data Engineering, Analytics Engineering, and Machine Learning platform designed to support credit risk analysis, decision intelligence, and analytical reporting.
 
-* Nodo **Master** (Scheduler + Webserver + Init)
-* Múltiples **Workers** (ejecución distribuida)
-* Integración con:
-* PostgreSQL (metadata DB)
-* RabbitMQ (broker)
+The platform follows a layered architecture that separates data ingestion, transformation, analytical modeling, and machine learning workloads while maintaining scalability, maintainability, and clear ownership across teams.
 
----
+This repository contains only data processing logic.
 
-## 🧱 Estructura del proyecto
-
-<pre class="overflow-visible! px-0!" data-start="642" data-end="857"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute end-1.5 top-1 z-2 md:end-2 md:top-1"></div><div class="relative"><div class="pe-11 pt-3"><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span>data-platform</span><br/><span>├── .gitignore</span><br/><span>├── README.md</span><br/><span>├── master</span><br/><span>│   ├── .env.template</span><br/><span>│   ├── docker-compose.yml</span><br/><span>├── pipelines</span><br/><span>│   ├── dags</span><br/><span>│   └── tasks</span><br/><span>└── worker</span><br/><span>    ├── .env.template</span><br/><span>    ├── docker-compose.yml</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
+Infrastructure components such as PostgreSQL, RabbitMQ, Spark deployment, Airflow deployment, networking, and monitoring are managed in a separate infrastructure repository.
 
 ---
 
-## 🧠 Arquitectura
+# Platform Architecture
 
-El sistema sigue el patrón distribuido de Airflow con  **CeleryExecutor** :
-
-<pre class="overflow-visible! px-0!" data-start="959" data-end="2039"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute end-1.5 top-1 z-2 md:end-2 md:top-1"></div><div class="relative"><div class="pe-11 pt-3"><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span>                +-------------------+</span><br/><span>                |   Airflow Master  |</span><br/><span>                |-------------------|</span><br/><span>                | Scheduler         |</span><br/><span>                | Webserver         |</span><br/><span>                | DB Init           |</span><br/><span>                +---------+---------+</span><br/><span>                          |</span><br/><span>                          v</span><br/><span>                +-------------------+</span><br/><span>                |    RabbitMQ       |</span><br/><span>                +-------------------+</span><br/><span>                          |</span><br/><span>          +---------------+---------------+</span><br/><span>          |                               |</span><br/><span>          v                               v</span><br/><span>+-------------------+          +-------------------+</span><br/><span>| Airflow Worker 1  |          | Airflow Worker N  |</span><br/><span>|-------------------|          |-------------------|</span><br/><span>| Ejecuta tareas    |          | Ejecuta tareas    |</span><br/><span>+-------------------+          +-------------------+</span><br/><span>                          |</span><br/><span>                          v</span><br/><span>                +-------------------+</span><br/><span>                |   PostgreSQL      |</span><br/><span>                | (Metadata DB)     |</span><br/><span>                +-------------------+</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
+```text
+Data Sources
+      │
+      ▼
+  Ingestion
+      │
+      ▼
+   Staging
+      │
+      ▼
+ Intermediate
+      │
+      ▼
+    Marts
+      │
+      ▼
+   Diamond
+      │
+      ├── Feature Store
+      ├── Risk Scoring
+      ├── Analytics
+      └── Serving Layer
+      │
+      ▼
+ Machine Learning
+```
 
 ---
 
-## ⚙️ Requisitos
+# Repository Structure
 
-* Docker
-* Docker Compose
-* Acceso a:
+```text
+financial-risk-data-platform
+│
+├── airflow/
+├── common/
+├── diamond/
+├── docs/
+├── governance/
+├── ingestion/
+├── integrations/
+├── intermediate/
+├── marts/
+├── ml/
+├── quality/
+├── staging/
+└── tests/
+```
+
+---
+
+# Layer Responsibilities
+
+## Airflow
+
+Responsible for workflow orchestration.
+
+Contains:
+
+* DAGs
+* Tasks
+* Operators
+* Hooks
+* Sensors
+
+Airflow coordinates ingestion, transformation, validation, and machine learning workflows.
+
+---
+
+## Ingestion
+
+Responsible for acquiring data from source systems.
+
+Examples:
+
+* Home Credit Risk datasets
+* External APIs
+* Batch files
+* Third-party providers
+
+Responsibilities:
+
+* Data extraction
+* Schema validation
+* Landing zone loading
+* Metadata registration
+
+---
+
+## Staging
+
+Represents the initial processing layers of the platform.
+
+### Bronze Layer
+
+Stores raw source data with minimal modifications.
+
+Responsibilities:
+
+* Raw data persistence
+* Historical retention
+* Source traceability
+
+### Silver Layer
+
+Stores standardized and cleaned datasets.
+
+Responsibilities:
+
+* Data cleansing
+* Data typing
+* Standardization
+* Deduplication
+
+---
+
+## Intermediate
+
+Business transformation layer.
+
+Responsibilities:
+
+* Business rules implementation
+* Data enrichment
+* Aggregations
+* Derived calculations
+* Cross-domain joins
+
+Examples:
+
+* Customer financial profiles
+* Payment behavior indicators
+* Credit risk attributes
+
+---
+
+## Marts
+
+Analytics Engineering layer.
+
+Contains dimensional models and business-oriented analytical assets.
+
+Responsibilities:
+
+* Star schema implementation
+* Fact tables
+* Dimension tables
+* Subject-oriented data marts
+
+### Finance Mart
+
+Examples:
+
+* Fact Loans
+* Fact Payments
+* Dim Customer
+* Dim Time
+
+### Risk Mart
+
+Examples:
+
+* Fact Risk Assessment
+* Dim Credit
+* Dim Geography
+
+---
+
+## Diamond
+
+Highest-value analytical layer.
+
+Contains curated business products and machine-learning-ready datasets.
+
+Responsibilities:
+
+* Feature Store
+* Risk Scoring Assets
+* Serving Views
+* Decision Intelligence Datasets
+* Analytical Products
+
+Examples:
+
+* Customer Risk Features
+* Credit Default Datasets
+* Portfolio Risk Indicators
+* Risk Scoring Views
+
+---
+
+## Machine Learning
+
+Consumes Diamond assets and analytical datasets.
+
+Responsibilities:
+
+* Training
+* Evaluation
+* Inference
+* Monitoring
+
+Potential use cases:
+
+* Credit Default Prediction
+* Risk Classification
+* Customer Segmentation
+* Portfolio Risk Scoring
+
+---
+
+## Quality
+
+Responsible for validating data across all platform layers.
+
+Validation categories:
+
+* Completeness
+* Consistency
+* Uniqueness
+* Accuracy
+* Referential Integrity
+* Timeliness
+
+Quality validations are automatically executed through orchestration pipelines.
+
+---
+
+## Governance
+
+Provides governance capabilities for data products and datasets.
+
+Includes:
+
+* Metadata Management
+* Data Contracts
+* Data Lineage
+* Policies
+* Ownership Definition
+
+---
+
+## Integrations
+
+Contains integrations between platform components and external systems.
+
+Examples:
+
+* External APIs
+* Third-Party Providers
+* Service Connectors
+* Data Exchange Interfaces
+
+---
+
+## Common
+
+Contains reusable platform assets.
+
+Examples:
+
+* Schemas
+* Contracts
+* Exceptions
+* Utilities
+
+This directory must not contain infrastructure configuration.
+
+---
+
+## Tests
+
+Testing strategy includes:
+
+### Unit Tests
+
+Validate isolated functions and transformations.
+
+### Integration Tests
+
+Validate interactions between platform components.
+
+### End-to-End Tests
+
+Validate complete pipeline execution.
+
+---
+
+# Development Principles
+
+## Do
+
+* Keep transformations modular
+* Reuse business logic
+* Validate data quality
+* Document business rules
+* Write automated tests
+* Follow layer responsibilities
+
+## Do Not
+
+* Store infrastructure code in this repository
+* Hardcode credentials
+* Duplicate business logic
+* Bypass quality validations
+* Mix infrastructure and processing concerns
+
+---
+
+# Technology Stack
+
+Core technologies used by the platform:
+
+* Python
+* Apache Spark
+* Apache Airflow
 * PostgreSQL
-* RabbitMQ
+* dbt
+* Pandas
+* PyArrow
+* Great Expectations
+* Scikit-Learn
 
 ---
 
-## 🚀 Levantar el cluster
+# Project Goal
 
-### 1. Configurar variables de entorno
+Build a scalable and maintainable Financial Risk Data Platform capable of supporting:
 
-#### Master
+* Data Engineering
+* Analytics Engineering
+* Credit Risk Analytics
+* Dimensional Modeling
+* Machine Learning
+* Data Governance
+* Decision Intelligence
 
-<pre class="overflow-visible! px-0!" data-start="2216" data-end="2259"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute inset-x-4 top-12 bottom-4"><div class="pointer-events-none sticky z-40 shrink-0 z-1!"><div class="sticky bg-token-border-light"></div></div></div><div class="relative"><div class=""><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span class="ͼs">cd</span><span> master</span><br/><span class="ͼs">cp</span><span> .env.template .env</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
-Editar `.env`:
-
-<pre class="overflow-visible! px-0!" data-start="2277" data-end="2565"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute inset-x-4 top-12 bottom-4"><div class="pointer-events-none sticky z-40 shrink-0 z-1!"><div class="sticky bg-token-border-light"></div></div></div><div class="relative"><div class=""><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span>AIRFLOW__CORE__EXECUTOR=CeleryExecutor</span><br/><br/><span># PostgreSQL</span><br/><span>POSTGRES_HOST=...</span><br/><span>POSTGRES_PORT=5432</span><br/><span>POSTGRES_DB=...</span><br/><span>POSTGRES_USER=...</span><br/><span>POSTGRES_PASSWORD=...</span><br/><br/><span># RabbitMQ</span><br/><span>RABBITMQ_HOST=...</span><br/><span>RABBITMQ_PORT=5672</span><br/><span>RABBITMQ_USER=...</span><br/><span>RABBITMQ_PASSWORD=...</span><br/><br/><span># Seguridad</span><br/><span>AIRFLOW__CORE__FERNET_KEY=...</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
----
-
-#### Worker
-
-<pre class="overflow-visible! px-0!" data-start="2585" data-end="2628"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute inset-x-4 top-12 bottom-4"><div class="pointer-events-none sticky z-40 shrink-0 z-1!"><div class="sticky bg-token-border-light"></div></div></div><div class="relative"><div class=""><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span class="ͼs">cd</span><span> worker</span><br/><span class="ͼs">cp</span><span> .env.template .env</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
-⚠️ Debe usar **exactamente las mismas credenciales** que el master.
-
----
-
-## ▶️ 2. Iniciar Master
-
-<pre class="overflow-visible! px-0!" data-start="2729" data-end="2771"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute inset-x-4 top-12 bottom-4"><div class="pointer-events-none sticky z-40 shrink-0 z-1!"><div class="sticky bg-token-border-light"></div></div></div><div class="relative"><div class=""><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span class="ͼs">cd</span><span> master</span><br/><span>docker compose up </span><span class="ͼu">-d</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
-Esto levanta:
-
-* DB migration (init)
-* Scheduler
-* Webserver
-
----
-
-## 👷 3. Iniciar Workers
-
-En cada nodo worker:
-
-<pre class="overflow-visible! px-0!" data-start="2888" data-end="2930"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute inset-x-4 top-12 bottom-4"><div class="pointer-events-none sticky z-40 shrink-0 z-1!"><div class="sticky bg-token-border-light"></div></div></div><div class="relative"><div class=""><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span class="ͼs">cd</span><span> worker</span><br/><span>docker compose up </span><span class="ͼu">-d</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
-Puedes escalar horizontalmente:
-
-<pre class="overflow-visible! px-0!" data-start="2965" data-end="3022"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute inset-x-4 top-12 bottom-4"><div class="pointer-events-none sticky z-40 shrink-0 z-1!"><div class="sticky bg-token-border-light"></div></div></div><div class="relative"><div class=""><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span>docker compose up </span><span class="ͼu">-d</span><span></span><span class="ͼu">--scale</span><span></span><span class="ͼt">airflow-worker</span><span class="ͼn">=</span><span class="ͼq">3</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
----
-
-## 📂 Pipelines
-
-Ubicación:
-
-<pre class="overflow-visible! px-0!" data-start="3058" data-end="3101"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute end-1.5 top-1 z-2 md:end-2 md:top-1"></div><div class="relative"><div class="pe-11 pt-3"><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span>pipelines/</span><br/><span>├── dags/</span><br/><span>└── tasks/</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
-* `dags/`: definición de workflows
-* `tasks/`: lógica reutilizable
-
-👉 Estos deben montarse en los contenedores de Airflow.
-
----
-
-## ⚠️ Consideraciones importantes
-
-### 🔴 1. Migraciones de base de datos
-
-Solo el **master** ejecuta:
-
-<pre class="overflow-visible! px-0!" data-start="3337" data-end="3367"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute inset-x-4 top-12 bottom-4"><div class="pointer-events-none sticky z-40 shrink-0 z-1!"><div class="sticky bg-token-border-light"></div></div></div><div class="relative"><div class=""><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span>airflow db upgrade</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
-👉 Los workers **NO deben ejecutar migraciones**
-
----
-
-### 🔴 2. Consistencia de configuración
-
-Todos los nodos deben compartir:
-
-* `FERNET_KEY`
-* Conexión a DB
-* Broker (RabbitMQ)
-
----
-
-### 🔴 3. Recursos de Workers
-
-Ajustar concurrencia según RAM:
-
-<pre class="overflow-visible! px-0!" data-start="3620" data-end="3669"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute inset-x-4 top-12 bottom-4"><div class="pointer-events-none sticky z-40 shrink-0 z-1!"><div class="sticky bg-token-border-light"></div></div></div><div class="relative"><div class=""><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span>airflow celery worker </span><span class="ͼu">--autoscale</span><span></span><span class="ͼq">4</span><span>,1</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
----
-
-## 🧪 Validación
-
-### Worker correcto
-
-<pre class="overflow-visible! px-0!" data-start="3715" data-end="3746"><div class="relative w-full mt-4 mb-1"><div class=""><div class="relative"><div class="h-full min-h-0 min-w-0"><div class="h-full min-h-0 min-w-0"><div class="border border-token-border-light border-radius-3xl corner-superellipse/1.1 rounded-3xl"><div class="h-full w-full border-radius-3xl bg-token-bg-elevated-secondary corner-superellipse/1.1 overflow-clip rounded-3xl lxnfua_clipPathFallback"><div class="pointer-events-none absolute end-1.5 top-1 z-2 md:end-2 md:top-1"></div><div class="relative"><div class="pe-11 pt-3"><div class="relative z-0 flex max-w-full"><div id="code-block-viewer" dir="ltr" class="q9tKkq_viewer cm-editor z-10 light:cm-light dark:cm-light flex h-full w-full flex-col items-stretch ͼk ͼy"><div class="cm-scroller"><div class="cm-content q9tKkq_readonly"><span>celery@worker ready</span></div></div></div></div></div></div></div></div></div></div><div class=""><div class=""></div></div></div></div></div></pre>
-
-### Errores comunes
-
-* `pg_advisory_lock` → múltiples migraciones
-* `exit code 137` → falta de memoria
-* tareas en cola → problema con RabbitMQ
-
----
-
-## 🔐 Seguridad
-
-* Nunca subir `.env`
-* Rotar credenciales si fueron expuestas
-* Usar redes privadas entre servicios
-
----
-
-## 📈 Escalabilidad
-
-Este diseño permite:
-
-* Agregar workers dinámicamente
-* Separar cargas por colas
-* Distribuir ejecución en múltiples servidores
-
----
-
-## 🎯 Objetivo del proyecto
-
-Proveer una base simple pero robusta para:
-
-* Orquestación de pipelines de datos
-* Procesamiento distribuido
-* Escalabilidad horizontal
-
----
-
-## 🧠 Notas finales
-
-Este setup está diseñado para:
-
-* entornos productivos ligeros
-* pruebas de arquitectura distribuida
-* bootstrap rápido de plataformas de datos
+through a modern layered architecture designed for enterprise-grade analytical workloads.
