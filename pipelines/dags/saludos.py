@@ -5,7 +5,7 @@ from datetime import datetime
 with DAG(
     dag_id='test_cluster_workers_bash',
     start_date=datetime(2023, 1, 1),
-    schedule_interval=None, # Ejecución puramente manual
+    schedule=None, # <-- ¡El estándar de Airflow 3!
     catchup=False,
     tags=['test', 'keppler']
 ) as dag:
