@@ -1,0 +1,25 @@
+# models/gold/gold_customer_360.yml
+version: 2
+
+models:
+  - name: gold_customer_360
+    description: "Vista analítica unificada Customer Financial 360. Consolida datos operacionales de créditos (ETL) e indicadores avanzados de comportamiento y buró (ELT) en PostgreSQL Gold."
+    columns:
+      - name: customer_id
+        description: "Llave primaria del modelo analítico unificado."
+        tests:
+          - unique       # Criterio de Aceptación: Un registro exacto por customer_id
+          - not_null     # Integridad técnica de completitud
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_id
+
+      - name: payment_consistency_score
+        description: "Score de consistencia de pagos internos mapeado en el pipeline."
+        tests:
+          - not_null
+
+      - name: current_bureau_score
+        description: "Último puntaje crediticio reportado por la central de riesgo externa."
+        tests:
+          - not_null
