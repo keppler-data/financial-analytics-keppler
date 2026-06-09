@@ -1,3 +1,131 @@
+# ===============================
+# Python 
+# ===============================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Enviroments
+
+.venv/
+venv/
+env/
+ENV/
+
 **/logs
 master/dags
 airflow/
+
+# =====================================
+# Jupyter
+# =====================================
+
+.ipynb_checkpoints/ 
+
+# ======================================
+# Enviroment Variables 
+# ======================================
+
+.env
+.env.*
+!.env.example
+
+# ================================
+# Logs
+# =================================
+
+logs/
+*.log
+
+# =========================
+# Airflow 
+# =========================
+
+airflow/logs/
+airflow/airflow.db
+airflow/airflow.cfg
+airflow/webserver_config.py
+
+# Airflow standalone
+standalone_admin_password.txt
+
+# =========================
+# Spark
+# =========================
+spark-warehouse/
+metastore_db/
+
+# Temporary Spark files
+*.crc
+
+# =========================
+# Docker
+# =========================
+docker-compose.override.yml
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+
+# =========================
+# JetBrains
+# =========================
+.idea/
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Testing
+# =========================
+.pytest_cache/
+.coverage
+htmlcov/
+
+# =========================
+# Build
+# =========================
+build/
+dist/
+*.egg-info/
+
+# =========================
+# Data Files
+# =========================
+
+# Raw datasets Home Credit
+data/raw/
+
+# Processed outputs
+data/bronze/
+data/silver/
+data/gold/
+data/diamond/
+
+# Local exports
+exports/
+
+# =========================
+# AWS
+# =========================
+.aws/
+
+# =========================
+# Secrets / Keys
+# =========================
+*.pem
+*.key
+*.crt
+*.p12
+
+# =========================
+# Temporary
+# =========================
+tmp/
+temp/
+.cache/
