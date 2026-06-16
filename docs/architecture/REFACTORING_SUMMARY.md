@@ -239,7 +239,7 @@ docker-compose -f docker-compose.yml up -d
 
 # Option B: Standalone
 airflow db init
-airflow users create --username admin --password admin
+airflow users create --username admin --password "${AIRFLOW_ADMIN_PASSWORD:?set AIRFLOW_ADMIN_PASSWORD}"
 airflow webserver
 
 # Option C: Cloud (AWS MWAA, GCP Cloud Composer, etc.)
