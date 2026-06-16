@@ -4,17 +4,11 @@ Airflow DAG: Data Quality & Monitoring
 Validates data quality and generates monitoring metrics
 """
 
-from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
+from pipelines.common.dag_defaults import build_default_args
 
-default_args = {
-    'owner': 'data-team',
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5),
-    'start_date': datetime(2024, 1, 1),
-}
+default_args = build_default_args(retries=1)
 
 dag = DAG(
     'monitoring_dag',

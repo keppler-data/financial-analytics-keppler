@@ -4,16 +4,12 @@ Airflow DAG: Bronze Layer Ingestion
 Raw data ingestion from various sources
 """
 
-from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
-default_args = {
-    'owner': 'data-team',
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
-    'start_date': datetime(2024, 1, 1),
-}
+from pipelines.common.dag_defaults import build_default_args
+
+default_args = build_default_args()
 
 dag = DAG(
     'bronze_pipeline_dag',

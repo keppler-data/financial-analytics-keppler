@@ -1,27 +1,26 @@
 # airflow/dags/elt_pipeline_dag.py
-from datetime import datetime, timedelta
+from datetime import datetime
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.tasks.elt_tasks import APIIngester, CSVIngester, LogIngester
 
-default_args = {
-    'owner': 'elt_analytics_team',
-    'depends_on_past': False,
-    'start_date': datetime(2026, 5, 20),
-    'email_on_failure': True,
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
-}
+from pipelines.common.dag_defaults import build_default_args
+
+default_args = build_default_args(
+    owner='elt_analytics_team',
+    start_date=datetime(2026, 5, 20),
+    depends_on_past=False,
+    email_on_failure=True,
+)
 
 def run_api_ingestion(endpoint, **kwargs):
-    # Airflow inyecta la fecha lógica de ejecución automáticamente
     ds = kwargs['ds']
     ingester = APIIngester()
     ingester.fetch_and_upload(dataset_endpoint=endpoint, date=ds)
 
 def run_csv_ingestion(filename, dataset_name, **kwargs):
     ds = kwargs['ds']
-    # Apunta a la carpeta unificada 'seed' tal como lo pidió el nuevo esquema de trabajo
     source_path = f"/opt/airflow/data/seed/{filename}"
     ingester = CSVIngester()
     ingester.ingest_csv(file_path=source_path, dataset_name=dataset_name, date=ds)
@@ -37,7 +36,7 @@ with DAG(
     'kepler_elt_bronze_pipeline',
     default_args=default_args,
     description='Orquestador de Ingesta para Datasets de Riesgo Financiero - Capa Bronze',
-    schedule_interval='@daily',  # Se ejecuta de manera continua/diaria
+    schedule_interval='@daily',
     catchup=False,
 ) as dag:
 

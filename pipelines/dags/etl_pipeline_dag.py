@@ -1,26 +1,19 @@
 # -*- coding: utf-8 -*-
 """
 Airflow DAG: ETL Pipeline
-Orchestrates Bronze → Silver → Intermediate → Gold transformations
+Orchestrates Bronze -> Silver -> Intermediate -> Gold transformations
 """
 
-from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.providers.amazon.aws.operators.emr import EmrAddStepsOperator
-from airflow.providers.postgres.operators.postgres import PostgresOperator
+from pipelines.common.dag_defaults import build_default_args
 
-default_args = {
-    'owner': 'data-team',
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
-    'start_date': datetime(2024, 1, 1),
-}
+default_args = build_default_args()
 
 dag = DAG(
     'etl_pipeline_dag',
     default_args=default_args,
-    description='ETL Pipeline: Bronze → Silver → Intermediate → Gold',
+    description='ETL Pipeline: Bronze -> Silver -> Intermediate -> Gold',
     schedule_interval='0 6 * * *',  # Daily at 6 AM
     catchup=False,
     tags=['etl', 'production'],
