@@ -9,17 +9,26 @@ from datetime import datetime
 
 LOG_PATTERN = r'(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}) (?P<level>\w+) (?P<service>\w+) (?P<message>.+)'
 
+REQUEST_TIMEOUT_SECONDS = 30
+_VALID_ENDPOINT_RE = re.compile(r'^[a-zA-Z0-9_]+$')
+
 class APIIngester:
     def __init__(self, base_url=None, api_key=None):
-        self.base_url = base_url or os.getenv("KEPLER_API_URL", "https://api.keplerfintech.local/v1")
+        self.base_url = base_url or os.getenv("KEPLER_API_URL")
+        if not self.base_url:
+            raise ValueError("KEPLER_API_URL must be set via argument or environment variable")
         self.api_key = api_key or os.getenv("KEPLER_API_KEY")
-        self.headers = {"Authorization": f"Bearer {api_key}"}
+        if not self.api_key:
+            raise ValueError("KEPLER_API_KEY must be set via argument or environment variable")
+        self.headers = {"Authorization": f"Bearer {self.api_key}"}
         self.s3 = boto3.client('s3')
 
     def fetch_and_upload(self, dataset_endpoint: str, date: str, bucket_name: str = 'kepler-bronze'):
+        if not _VALID_ENDPOINT_RE.match(dataset_endpoint):
+            raise ValueError(f"Invalid dataset_endpoint: {dataset_endpoint!r}")
         endpoint = f"{self.base_url}/{dataset_endpoint}"
         params = {"date": date, "limit": 10000}
-        response = requests.get(endpoint, headers=self.headers, params=params)
+        response = requests.get(endpoint, headers=self.headers, params=params, timeout=REQUEST_TIMEOUT_SECONDS)
         response.raise_for_status()
         data = response.json()
         records = data.get('items', data if isinstance(data, list) else [])
@@ -39,6 +48,10 @@ class CSVIngester:
         self.s3 = boto3.client('s3')
 
     def ingest_csv(self, file_path: str, dataset_name: str, date: str, bucket_name: str = 'kepler-bronze'):
+        resolved = os.path.realpath(file_path)
+        allowed_prefix = os.path.realpath("/opt/airflow/data")
+        if not resolved.startswith(allowed_prefix + os.sep):
+            raise ValueError(f"file_path must be under {allowed_prefix}: got {resolved}")
         df = None
         for enc in self.SUPPORTED_ENCODINGS:
             try:
