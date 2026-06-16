@@ -3,9 +3,14 @@ import re
 import json
 import requests
 import pandas as pd
-import boto3
 from io import BytesIO
-from datetime import datetime
+
+from pipelines.common.s3_utils import (
+    build_ingestion_metadata,
+    build_s3_key,
+    upload_to_s3,
+    DEFAULT_BUCKET,
+)
 
 LOG_PATTERN = r'(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}) (?P<level>\w+) (?P<service>\w+) (?P<message>.+)'
 
@@ -14,9 +19,8 @@ class APIIngester:
         self.base_url = base_url or os.getenv("KEPLER_API_URL", "https://api.keplerfintech.local/v1")
         self.api_key = api_key or os.getenv("KEPLER_API_KEY")
         self.headers = {"Authorization": f"Bearer {api_key}"}
-        self.s3 = boto3.client('s3')
 
-    def fetch_and_upload(self, dataset_endpoint: str, date: str, bucket_name: str = 'kepler-bronze'):
+    def fetch_and_upload(self, dataset_endpoint: str, date: str, bucket_name: str = DEFAULT_BUCKET):
         endpoint = f"{self.base_url}/{dataset_endpoint}"
         params = {"date": date, "limit": 10000}
         response = requests.get(endpoint, headers=self.headers, params=params)
@@ -24,21 +28,18 @@ class APIIngester:
         data = response.json()
         records = data.get('items', data if isinstance(data, list) else [])
         record_count = len(records)
-        year, month, day = date.split('-')
-        s3_key = f"financial/{dataset_endpoint}/year={year}/month={month}/day={day}/{dataset_endpoint}_{date}.json"
-        self.s3.put_object(
-            Bucket=bucket_name, Key=s3_key, Body=json.dumps(data), ContentType='application/json',
-            Metadata={'source': dataset_endpoint, 'ingestion_date': datetime.utcnow().isoformat(), 'record_count': str(record_count)}
-        )
+
+        s3_key = build_s3_key(dataset_endpoint, date, "json")
+        metadata = build_ingestion_metadata(dataset_endpoint, record_count)
+        upload_to_s3(s3_key, json.dumps(data), "application/json", bucket_name, metadata)
+
         print(f"✅ API Ingestion exitosa: {record_count} registros en s3://{bucket_name}/{s3_key}")
         return record_count
 
 class CSVIngester:
     SUPPORTED_ENCODINGS = ['utf-8', 'latin-1', 'cp1252']
-    def __init__(self):
-        self.s3 = boto3.client('s3')
 
-    def ingest_csv(self, file_path: str, dataset_name: str, date: str, bucket_name: str = 'kepler-bronze'):
+    def ingest_csv(self, file_path: str, dataset_name: str, date: str, bucket_name: str = DEFAULT_BUCKET):
         df = None
         for enc in self.SUPPORTED_ENCODINGS:
             try:
@@ -53,17 +54,15 @@ class CSVIngester:
         df['_file_name'] = os.path.basename(file_path)
         buffer = BytesIO()
         df.to_parquet(buffer, index=False, compression='snappy')
-        year, month, day = date.split('-')
-        s3_key = f"financial/{dataset_name}/year={year}/month={month}/day={day}/{dataset_name}_{date}.parquet"
-        self.s3.put_object(Bucket=bucket_name, Key=s3_key, Body=buffer.getvalue(), ContentType='application/x-parquet')
+
+        s3_key = build_s3_key(dataset_name, date, "parquet")
+        upload_to_s3(s3_key, buffer.getvalue(), "application/x-parquet", bucket_name)
+
         print(f"✅ CSV Ingestion exitosa: {len(df)} filas en s3://{bucket_name}/{s3_key}")
         return len(df)
 
 class LogIngester:
-    def __init__(self):
-        self.s3 = boto3.client('s3')
-
-    def parse_and_upload_logs(self, log_file_path: str, date: str, bucket_name: str = 'kepler-bronze'):
+    def parse_and_upload_logs(self, log_file_path: str, date: str, bucket_name: str = DEFAULT_BUCKET):
         events = []
         if not os.path.exists(log_file_path):
             print(f"⚠️ Archivo ausente: {log_file_path}")
@@ -76,11 +75,10 @@ class LogIngester:
         if not events:
             return 0
         ndjson_content = "\n".join([json.dumps(e) for e in events])
-        year, month, day = date.split('-')
-        s3_key = f"financial/app_logs/year={year}/month={month}/day={day}/app_logs_{date}.json"
-        self.s3.put_object(
-            Bucket=bucket_name, Key=s3_key, Body=ndjson_content, ContentType='application/x-ndjson',
-            Metadata={'source': 'app_logs', 'ingestion_date': datetime.utcnow().isoformat(), 'record_count': str(len(events))}
-        )
+
+        s3_key = build_s3_key("app_logs", date, "json")
+        metadata = build_ingestion_metadata("app_logs", len(events))
+        upload_to_s3(s3_key, ndjson_content, "application/x-ndjson", bucket_name, metadata)
+
         print(f"✅ Log Ingestion exitosa: {len(events)} eventos en s3://{bucket_name}/{s3_key}")
         return len(events)
