@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Spark Master
+  - job_name: 'spark-master'
+    static_configs:
+      - targets: ['financial-risk-spark-master:8080']
+
+  # Spark Worker
+  - job_name: 'spark-worker'
+    static_configs:
+      - targets: ['financial-risk-spark-worker:8081']
+
+  # PostgreSQL (via postgres_exporter)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # RabbitMQ
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
