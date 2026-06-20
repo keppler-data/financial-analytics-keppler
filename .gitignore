@@ -110,6 +110,9 @@ data/diamond/
 # Local exports
 exports/
 
+# Local S3 ingestion mirror
+data/local_s3_mirror/
+
 # =========================
 # AWS
 # =========================
