@@ -1,7 +1,9 @@
 from pathlib import Path
 import tempfile
 
-from kaggle.api.kaggle_api_extended import KaggleApi
+from pipelines.utils.kaggle.client import (
+    get_kaggle_client,
+)
 
 
 def download_lending_club() -> str:
@@ -20,9 +22,7 @@ def download_lending_club() -> str:
         exist_ok=True
     )
 
-    api = KaggleApi()
-
-    api.authenticate()
+    api = get_kaggle_client()
 
     api.dataset_download_files(
         dataset="wordsforthewise/lending-club",

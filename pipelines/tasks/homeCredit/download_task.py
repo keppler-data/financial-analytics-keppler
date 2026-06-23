@@ -1,8 +1,10 @@
 from pathlib import Path
 import tempfile
 
-from kaggle.api.kaggle_api_extended import KaggleApi
 
+from pipelines.utils.kaggle.client import (
+    get_kaggle_client,
+)
 
 def download_home_credit() -> str:
     """
@@ -20,9 +22,7 @@ def download_home_credit() -> str:
         exist_ok=True
     )
 
-    api = KaggleApi()
-
-    api.authenticate()
+    api = get_kaggle_client()
 
     api.competition_download_files(
         competition="home-credit-default-risk",
