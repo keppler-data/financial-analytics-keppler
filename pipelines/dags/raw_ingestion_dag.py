@@ -54,11 +54,11 @@ from pipelines.tasks.homeCredit.ingestion_task import (
     ingest_home_credit,
 )
 
-from pipelines.tasks.lendingClub.accepted.ingestion_task import (
+from pipelines.tasks.lendingClub.accepted import (
     ingest_lending_accepted,
 )
 
-from pipelines.tasks.lendingClub.rejected.ingestion_task import (
+from pipelines.tasks.lendingClub.rejected import (
     ingest_lending_rejected,
 )
 
