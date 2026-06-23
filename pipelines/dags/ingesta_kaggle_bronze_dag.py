@@ -24,7 +24,7 @@ with DAG(
     'ingesta_kaggle_bronze_dag',
     default_args=default_args,
     description='Extrae los 4 datasets masivos de Kaggle y los almacena crudos en S3 (Capa Bronze)',
-    schedule_interval='@daily',
+    schedule='@daily',
     catchup=False,
     tags=['ingestion', 'bronze', 'kaggle', 's3'],
 ) as dag:
