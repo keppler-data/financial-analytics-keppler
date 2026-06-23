@@ -1,12 +1,6 @@
 from datetime import datetime, timedelta
-import sys
-import os
 
-# Ajustamos el path para incluir la nueva carpeta con guion. 
-task_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../tasks/ingestion_kaggle-bronze'))
-sys.path.insert(0, task_dir)
-
-from kaggle_tasks import (
+from pipelines.tasks.ingestion_kaggle_bronze.kaggle_tasks import (
     task_ingest_lending_club,
     task_ingest_home_credit,
     task_ingest_give_me_some_credit,
