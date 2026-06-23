@@ -1,3 +1,43 @@
-**/logs
-master/dags
+# Entornos virtuales de Python (creados por uv, pip, venv, conda)
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# Cache de Python y archivos compilados
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Herramientas de testing y coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs e información temporal de Airflow y Spark
+**/logs/
+logs/
 airflow/
+master/dags/
+*.log
+
+# Entornos IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de SO
+.DS_Store
+Thumbs.db
+
+# Datos y temporales
+data/
+tmp/
+temp/
+*.csv
+*.parquet
+*.json
+*.zip
+!kaggle.json
