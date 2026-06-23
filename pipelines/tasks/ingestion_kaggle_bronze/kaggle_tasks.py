@@ -24,6 +24,15 @@ def _base_download_upload(dataset_id: str, s3_prefix: str):
     # Actualizado al nombre de variable correcto configurado en Airflow
     bronze_bucket = Variable.get("BUCKET_NAME", default_var="mi-bucket-bronze")
 
+    # --- Verificación de Idempotencia (Evitar reprocesos) ---
+    s3_prefix_path = f"bronze/{s3_prefix}/"
+    response = s3_client.list_objects_v2(Bucket=bronze_bucket, Prefix=s3_prefix_path)
+    
+    if 'Contents' in response and len(response['Contents']) > 0:
+        logger.info(f"¡Éxito! Los datos de {dataset_id} ya existen en s3://{bronze_bucket}/{s3_prefix_path}. Saltando ingesta para ahorrar tiempo y red.")
+        return
+    # --------------------------------------------------------
+
     with tempfile.TemporaryDirectory() as tmpdirname:
         logger.info(f"Descargando dataset '{dataset_id}' en '{tmpdirname}'...")
         
@@ -81,6 +90,6 @@ def task_ingest_give_me_some_credit():
 
 def task_ingest_loan_prediction():
     _base_download_upload(
-        dataset_id='altruistdelight04/loan-prediction-dataset',
+        dataset_id='altruistdelhite04/loan-prediction-problem-dataset',
         s3_prefix='loan_prediction'
     )
