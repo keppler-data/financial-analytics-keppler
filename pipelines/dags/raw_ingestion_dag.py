@@ -40,6 +40,12 @@ ejecutarse en paralelo utilizando
 CeleryExecutor.
 """
 
+import sys 
+
+sys.path.append(
+    "/opt/airflow/data-platform"
+)
+
 from airflow.sdk import dag, task
 
 from pendulum import datetime
