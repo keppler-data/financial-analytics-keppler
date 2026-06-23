@@ -16,7 +16,7 @@ default_args = {
     'start_date': datetime(2023, 1, 1), # Ajustar a la fecha de despliegue real
     'email_on_failure': False,
     'email_on_retry': False,
-    'retries': 2,
+    'retries': 0,
     'retry_delay': timedelta(minutes=5),
 }
 
