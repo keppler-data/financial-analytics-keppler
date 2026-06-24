@@ -12,8 +12,9 @@ def _base_download_upload(dataset_id: str, s3_prefix: str):
     """
     Lógica base interna para descargar todos los archivos de un dataset y subirlos a S3.
     """
-    os.environ['KAGGLE_USERNAME'] = Variable.get("KAGGLE_USERNAME", default_var="")
-    os.environ['KAGGLE_KEY'] = Variable.get("KAGGLE_KEY", default_var="")
+    # Agregamos .strip() para limpiar cualquier espacio en blanco o salto de línea accidental
+    os.environ['KAGGLE_USERNAME'] = Variable.get("KAGGLE_USERNAME", default_var="").strip()
+    os.environ['KAGGLE_KEY'] = Variable.get("KAGGLE_KEY", default_var="").strip()
 
     from kaggle.api.kaggle_api_extended import KaggleApi
     
