@@ -35,7 +35,6 @@ def _base_download_upload(dataset_id: str, s3_prefix: str):
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         # --- AGREGA ESTAS LÍNEAS DE DEBUG ---
-        import os
         username = os.environ.get('KAGGLE_USERNAME', 'NO ENCONTRADO')
         key_snippet = str(os.environ.get('KAGGLE_KEY', 'NO ENCONTRADO'))[:5] # Solo los primeros 5 caracteres por seguridad
         logger.info(f"DEBUG CREDENCIALES -> Usuario: {username} | Key inicia con: {key_snippet}...")
