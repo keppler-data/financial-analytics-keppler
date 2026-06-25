@@ -83,17 +83,7 @@ def task_ingest_lending_club():
         s3_prefix='lending_club'
     )
 
-def task_ingest_home_credit():
-    _base_download_upload(
-        dataset_id='c/home-credit-default-risk',
-        s3_prefix='home_credit'
-    )
 
-def task_ingest_give_me_some_credit():
-    _base_download_upload(
-        dataset_id='c/GiveMeSomeCredit',
-        s3_prefix='give_me_some_credit'
-    )
 
 def task_ingest_loan_prediction():
     _base_download_upload(

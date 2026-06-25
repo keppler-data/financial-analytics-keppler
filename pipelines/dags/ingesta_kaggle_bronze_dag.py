@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 
-from pipelines.tasks.ingestion_kaggle_bronze.kaggle_tasks import (
+from pipelines.tasks.caso_5.download_from_kaggle import (
     task_ingest_lending_club,
-    task_ingest_home_credit,
-    task_ingest_give_me_some_credit,
     task_ingest_loan_prediction
+)
+from pipelines.tasks.caso_5.download_from_huggingface import (
+    task_ingest_home_credit,
+    task_ingest_give_me_some_credit
 )
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -23,10 +25,10 @@ default_args = {
 with DAG(
     'ingesta_kaggle_bronze_dag',
     default_args=default_args,
-    description='Extrae los 4 datasets masivos de Kaggle y los almacena crudos en S3 (Capa Bronze)',
+    description='Extrae los 4 datasets masivos desde Kaggle y HuggingFace y los almacena crudos en S3 (Capa Bronze)',
     schedule=None,
     catchup=False,
-    tags=['ingestion', 'bronze', 'kaggle', 's3'],
+    tags=['ingestion', 'bronze', 'kaggle', 'huggingface', 's3'],
 ) as dag:
 
     # ==========================================
