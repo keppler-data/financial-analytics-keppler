@@ -39,14 +39,15 @@ def drop_high_null_columns(df, threshold=0.8):
     if total_rows == 0:
         return df
 
-    # Optimizamos contando los valores no nulos con summary("count")
-    counts_row = df.summary("count").first().asDict()
+    # Optimizamos contando los nulos directamente con funciones nativas (summary es MUY lento para 100+ columnas)
+    from pyspark.sql.functions import count, when, col
+    
+    exprs = [count(when(col(c).isNull(), c)).alias(c) for c in df.columns]
+    null_counts_row = df.select(*exprs).first().asDict()
     
     columns_to_drop = []
     for c in df.columns:
-        # 'summary' retorna string, hay que parsear
-        non_null_count = int(counts_row.get(c, 0))
-        null_count = total_rows - non_null_count
+        null_count = int(null_counts_row.get(c, 0))
         null_ratio = null_count / total_rows
         
         if null_ratio > threshold:
