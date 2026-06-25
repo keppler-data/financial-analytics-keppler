@@ -26,6 +26,7 @@ def standardize_target(df):
     
     if 'target' in cols:
         df = df.withColumn('is_default', col('target').cast('integer'))
+        df = df.drop('target')
     elif 'loan_status' in cols:
         df = df.withColumn('is_default', 
             when(col('loan_status') == 'Charged Off', 1)
@@ -34,8 +35,10 @@ def standardize_target(df):
             .when(col('loan_status') == 'Y', 0)
             .otherwise(None)
         )
+        df = df.drop('loan_status')
     elif 'seriousdlqin2yrs' in cols:
         df = df.withColumn('is_default', col('seriousdlqin2yrs').cast('integer'))
+        df = df.drop('seriousdlqin2yrs')
         
     return df
 
@@ -115,13 +118,14 @@ def main():
     fs = FileSystem.get(URI(bronze_path), sc._jsc.hadoopConfiguration())
 
     # 1. Comprobar Idempotencia (Si ya existe en Silver, saltar)
-    if fs.exists(Path(silver_path)):
-        # Verificamos si la carpeta existe y no esta vacía
-        file_statuses = fs.listStatus(Path(silver_path))
-        if len(file_statuses) > 0:
-            print(f"La tabla {table_name} ya fue procesada en Silver ({silver_path}). Saltando ejecución para ahorrar recursos.")
-            spark.stop()
-            return
+    # NOTA: Comentamos este bloque para lograr IDEMPOTENCIA REAL. 
+    # Ahora siempre procesará y sobreescribirá (.mode("overwrite")), aplicando los cambios nuevos.
+    # if fs.exists(Path(silver_path)):
+    #     file_statuses = fs.listStatus(Path(silver_path))
+    #     if len(file_statuses) > 0:
+    #         print(f"La tabla {table_name} ya fue procesada en Silver ({silver_path}). Saltando ejecución para ahorrar recursos.")
+    #         spark.stop()
+    #         return
 
     # 2. Comprobar si Bronze existe (Falta de datos)
     if not fs.exists(Path(bronze_path)):
@@ -139,6 +143,10 @@ def main():
     original_cols = len(df.columns)
 
     # 4. Transformaciones
+    df = df.dropDuplicates()
+    dedup_rows = df.count()
+    duplicates_dropped = original_rows - dedup_rows
+
     df = standardize_column_names(df)
     df = standardize_target(df)
     df = trim_string_columns(df)
@@ -158,7 +166,9 @@ def main():
     report += f"- **Tiempo de Ejecución:** {duration_sec} segundos\n\n"
     
     report += "## Métricas de Volumen\n"
-    report += f"- **Filas:** {original_rows:,}\n"
+    report += f"- **Filas Originales:** {original_rows:,}\n"
+    report += f"- **Duplicados Eliminados:** {duplicates_dropped:,}\n"
+    report += f"- **Filas Finales (Sin duplicados):** {dedup_rows:,}\n"
     report += f"- **Columnas Originales:** {original_cols}\n"
     report += f"- **Columnas Finales:** {len(df.columns)}\n\n"
     
