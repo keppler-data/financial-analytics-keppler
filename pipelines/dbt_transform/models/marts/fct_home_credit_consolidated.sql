@@ -1,6 +1,8 @@
 {{ config(
     materialized='table',
-    s3_data_dir='s3://keppler-data-architecture/gold/fct_home_credit_consolidated',
+    table_type='hive',
+    external_location='s3://keppler-data-architecture/gold/fct_home_credit_consolidated/',
+    s3_data_dir='s3://keppler-data-architecture/gold/fct_home_credit_consolidated/',
     format='parquet'
 ) }}
 

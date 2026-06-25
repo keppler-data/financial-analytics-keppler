@@ -1,6 +1,8 @@
 {{ config(
     materialized='table',
-    s3_data_dir='s3://keppler-data-architecture/diamond/diamond_risk_features',
+    table_type='hive',
+    external_location='s3://keppler-data-architecture/diamond/diamond_risk_features/',
+    s3_data_dir='s3://keppler-data-architecture/diamond/diamond_risk_features/',
     format='parquet'
 ) }}
 
