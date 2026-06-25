@@ -35,6 +35,7 @@ def drop_high_null_columns(df, threshold=0.8):
     """
     print(f"Calculando nulos para eliminar columnas con más del {threshold*100}% de vacíos...")
     total_rows = df.count()
+
     if total_rows == 0:
         return df
 

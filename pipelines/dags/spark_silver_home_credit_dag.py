@@ -15,7 +15,7 @@ default_args = {
 }
 
 # Obtener nombre del bucket desde Variables de Airflow
-bronze_bucket = Variable.get("BUCKET_NAME", default_var="mi-bucket-bronze")
+bronze_bucket = Variable.get("BUCKET_NAME", default_var="keppler-data-architecture")
 silver_bucket = Variable.get("SILVER_BUCKET_NAME", default_var=bronze_bucket)
 
 # Lista de archivos a procesar dinámicamente
@@ -46,6 +46,7 @@ with DAG(
         # Comando que ejecuta spark-submit dentro del contenedor core-spark-master
         spark_command = f"""
         docker exec core-spark-master /opt/spark/bin/spark-submit \\
+            --packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \\
             --master spark://21.0.2.203:7077 \\
             /opt/spark/pipelines/tasks-spark/caso_5/silver/bronze_to_silver_home_credit.py \\
             --bronze-bucket {bronze_bucket} \\
