@@ -1,0 +1,11 @@
+keppler_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: athena
+      s3_staging_dir: s3://keppler-data-architecture/athena-query-results/
+      region_name: us-east-1
+      schema: keppler_gold
+      database: awsdatacatalog
+      threads: 4
+      work_group: primary

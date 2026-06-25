@@ -18,6 +18,27 @@ def standardize_column_names(df):
             df = df.withColumnRenamed(old_col, new_col)
     return df
 
+def standardize_target(df):
+    """
+    Standardize the default indicator across different datasets into a single 'is_default' column.
+    """
+    cols = df.columns
+    
+    if 'target' in cols:
+        df = df.withColumn('is_default', col('target').cast('integer'))
+    elif 'loan_status' in cols:
+        df = df.withColumn('is_default', 
+            when(col('loan_status') == 'Charged Off', 1)
+            .when(col('loan_status') == 'Fully Paid', 0)
+            .when(col('loan_status') == 'N', 1)
+            .when(col('loan_status') == 'Y', 0)
+            .otherwise(None)
+        )
+    elif 'seriousdlqin2yrs' in cols:
+        df = df.withColumn('is_default', col('seriousdlqin2yrs').cast('integer'))
+        
+    return df
+
 def trim_string_columns(df):
     string_columns = [f.name for f in df.schema.fields if isinstance(f.dataType, StringType)]
     for c in string_columns:
@@ -119,6 +140,7 @@ def main():
 
     # 4. Transformaciones
     df = standardize_column_names(df)
+    df = standardize_target(df)
     df = trim_string_columns(df)
     df = convert_days_to_years(df)
     df, dropped_cols = drop_high_null_columns(df, original_rows, threshold=0.8)

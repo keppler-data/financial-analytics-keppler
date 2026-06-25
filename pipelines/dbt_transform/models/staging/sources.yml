@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: silver
+    database: awsdatacatalog
+    schema: keppler_silver
+    tables:
+      - name: application_train
+      - name: bureau
+      - name: previous_application
+      - name: installments_payments
+      - name: pos_cash_balance
+      - name: credit_card_balance

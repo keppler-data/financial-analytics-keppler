@@ -29,6 +29,7 @@ dev = [
 dbt = [
     "dbt-core>=1.7",
     "dbt-postgres>=1.7",
+    "dbt-athena-community>=1.7.1",
 ]
 
 [tool.pytest.ini_options]
