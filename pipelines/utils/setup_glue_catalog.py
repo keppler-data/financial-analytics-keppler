@@ -1,106 +1,114 @@
 import boto3
-import time
+import os
+import tempfile
+import pyarrow.parquet as pq
+
+def map_type(pa_type_str):
+    pa_type_str = pa_type_str.lower()
+    if 'int8' in pa_type_str: return 'tinyint'
+    if 'int16' in pa_type_str: return 'smallint'
+    if 'int32' in pa_type_str: return 'int'
+    if 'int64' in pa_type_str: return 'bigint'
+    if 'float16' in pa_type_str or 'float32' in pa_type_str: return 'float'
+    if 'float64' in pa_type_str or 'double' in pa_type_str: return 'double'
+    if 'bool' in pa_type_str: return 'boolean'
+    if 'timestamp' in pa_type_str: return 'timestamp'
+    if 'date' in pa_type_str: return 'date'
+    return 'string'
 
 def setup_catalog():
-    print("Iniciando configuración de AWS Glue y Athena...")
-    
-    # Inicializar clientes
-    # Usamos la sesión por defecto que tomará el rol de la instancia EC2
+    print("Iniciando registro de esquema (PyArrow) en AWS Glue...")
     glue = boto3.client('glue', region_name='us-east-1')
+    s3 = boto3.client('s3', region_name='us-east-1')
     
     databases = ['keppler_silver', 'keppler_gold', 'keppler_diamond']
     
     for db_name in databases:
         try:
             glue.get_database(Name=db_name)
-            print(f"La base de datos '{db_name}' ya existe.")
+            print(f"Base de datos '{db_name}' ya existe.")
         except glue.exceptions.EntityNotFoundException:
             print(f"Creando base de datos '{db_name}'...")
             glue.create_database(
-                DatabaseInput={
-                    'Name': db_name,
-                    'Description': f'Database for {db_name.split("_")[1].capitalize()} layer of Keppler Data Platform'
-                }
+                DatabaseInput={'Name': db_name, 'Description': f'Capa {db_name}'}
             )
-            print(f"Base de datos '{db_name}' creada exitosamente.")
 
-    # Crear Crawler para la capa Silver
-    crawler_name = 'keppler_silver_crawler'
-    bucket_name = 'keppler-data-architecture'
-    silver_path = f's3://{bucket_name}/silver/'
+    bucket = 'keppler-data-architecture'
     
-    try:
-        glue.get_crawler(Name=crawler_name)
-        print(f"El crawler '{crawler_name}' ya existe.")
-    except glue.exceptions.EntityNotFoundException:
-        print(f"Creando Crawler '{crawler_name}'...")
-        
-        # Necesitamos el rol. El usuario indicó que la instancia tiene full access.
-        # Crearemos un rol básico para el crawler si no le pasamos uno, pero
-        # requerimos un rol de IAM. Busquemos un rol que empiece con AWSGlueServiceRole
-        iam = boto3.client('iam')
-        roles = iam.list_roles()['Roles']
-        glue_role = next((r['Arn'] for r in roles if 'glue' in r['RoleName'].lower()), None)
-        
-        if not glue_role:
-            print("AVISO: No se encontró un rol específico de Glue. Asegúrate de que el rol de tu EC2 sirva para crawlers o crea uno.")
-            # Para evitar que el script falle, usamos el primer rol disponible bajo la asunción de que el usuario sabe lo que hace
-            # (El usuario dijo "mis instancias tienen role full access a s3, athena y catalogue")
-            # Idealmente, el rol debe tener AWSGlueServiceRole y AmazonS3FullAccess
-            
-            # Vamos a intentar inferir el rol desde el metadata de la instancia
-            import urllib.request
-            import json
-            try:
-                token = urllib.request.urlopen(urllib.request.Request('http://169.254.169.254/latest/api/token', headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'}, method='PUT')).read().decode()
-                info = urllib.request.urlopen(urllib.request.Request('http://169.254.169.254/latest/meta-data/iam/info', headers={'X-aws-ec2-metadata-token': token})).read().decode()
-                glue_role = json.loads(info)['InstanceProfileArn'].replace('instance-profile', 'role')
-            except Exception as e:
-                print("No se pudo obtener el rol de la instancia automáticamente.")
-                # Fallback, el usuario deberá actualizar esto si falla
-                glue_role = roles[0]['Arn'] if roles else ""
-
-        glue.create_crawler(
-            Name=crawler_name,
-            Role=glue_role,
-            DatabaseName='keppler_silver',
-            Targets={
-                'S3Targets': [
-                    {'Path': silver_path}
-                ]
-            },
-            SchemaChangePolicy={
-                'UpdateBehavior': 'UPDATE_IN_DATABASE',
-                'DeleteBehavior': 'DEPRECATE_IN_DATABASE'
-            },
-            RecrawlPolicy={
-                'RecrawlBehavior': 'CRAWL_EVERYTHING'
-            }
-        )
-        print(f"Crawler '{crawler_name}' creado exitosamente con rol {glue_role}.")
-        
-    print(f"Iniciando Crawler '{crawler_name}' para registrar las tablas Parquet...")
-    try:
-        glue.start_crawler(Name=crawler_name)
-    except glue.exceptions.CrawlerRunningException:
-        print("El crawler ya está corriendo.")
-    except Exception as e:
-        print(f"No se pudo iniciar el crawler. Detalles: {e}")
+    print("Buscando datasets en la capa Silver...")
+    resp_ds = s3.list_objects_v2(Bucket=bucket, Prefix='silver/', Delimiter='/')
+    if 'CommonPrefixes' not in resp_ds:
+        print("No se encontraron datasets.")
         return
+        
+    for ds_prefix in resp_ds['CommonPrefixes']:
+        dataset_path = ds_prefix['Prefix']
+        
+        resp_tb = s3.list_objects_v2(Bucket=bucket, Prefix=dataset_path, Delimiter='/')
+        if 'CommonPrefixes' not in resp_tb:
+            continue
+            
+        for tb_prefix in resp_tb['CommonPrefixes']:
+            table_path = tb_prefix['Prefix']
+            table_name = table_path.strip('/').split('/')[-1]
+            
+            try:
+                glue.get_table(DatabaseName='keppler_silver', Name=table_name)
+                print(f"-> Tabla '{table_name}' ya existe en Glue. Saltando.")
+                continue
+            except glue.exceptions.EntityNotFoundException:
+                pass
+                
+            print(f"-> Descubriendo esquema para '{table_name}'...")
+            objects = s3.list_objects_v2(Bucket=bucket, Prefix=table_path, MaxKeys=5)
+            parquet_key = None
+            for obj in objects.get('Contents', []):
+                if obj['Key'].endswith('.parquet'):
+                    parquet_key = obj['Key']
+                    break
+                    
+            if not parquet_key:
+                print(f"   [!] No se encontraron archivos parquet para {table_name}.")
+                continue
+                
+            tmp_file = os.path.join(tempfile.gettempdir(), f"{table_name}_tmp.parquet")
+            s3.download_file(bucket, parquet_key, tmp_file)
+            
+            try:
+                schema = pq.read_schema(tmp_file)
+            except Exception as e:
+                print(f"   [!] Error leyendo el parquet: {e}")
+                os.remove(tmp_file)
+                continue
+            os.remove(tmp_file)
+            
+            columns = []
+            for name in schema.names:
+                athena_type = map_type(str(schema.field(name).type))
+                columns.append({'Name': name, 'Type': athena_type})
+                
+            s3_location = f"s3://{bucket}/{table_path}"
+            
+            table_input = {
+                'Name': table_name,
+                'TableType': 'EXTERNAL_TABLE',
+                'Parameters': {'classification': 'parquet'},
+                'StorageDescriptor': {
+                    'Columns': columns,
+                    'Location': s3_location,
+                    'InputFormat': 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat',
+                    'OutputFormat': 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat',
+                    'SerdeInfo': {
+                        'SerializationLibrary': 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe',
+                        'Parameters': {'serialization.format': '1'}
+                    }
+                }
+            }
+            
+            glue.create_table(DatabaseName='keppler_silver', TableInput=table_input)
+            print(f"   [+] ¡Tabla '{table_name}' registrada en Glue con éxito! ({len(columns)} columnas)")
 
-    print("Esperando a que el crawler termine (esto puede tomar un par de minutos)...")
-    while True:
-        response = glue.get_crawler(Name=crawler_name)
-        state = response['Crawler']['State']
-        if state == 'READY':
-            print("¡Crawler terminó con éxito! Las tablas están listas en Athena.")
-            break
-        elif state in ['RUNNING', 'STOPPING']:
-            print(f"Estado del crawler: {state}... esperando 15 segundos.")
-            time.sleep(15)
-        else:
-            print(f"Estado desconocido: {state}. Saliendo del loop.")
-            break
+    print("Proceso de Catálogo completado con éxito.")
 
 if __name__ == "__main__":
     setup_catalog()
