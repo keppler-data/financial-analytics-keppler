@@ -48,7 +48,7 @@ with DAG(
         docker exec core-spark-master /opt/spark/bin/spark-submit \\
             --packages org.apache.hadoop:hadoop-aws:3.4.0,com.amazonaws:aws-java-sdk-bundle:1.12.367 \\
             --total-executor-cores 10 \\
-            --executor-memory 3000M \\
+            --executor-memory 2000M \\
             --master spark://21.0.2.203:7077 \\
             /opt/spark/pipelines/tasks-spark/caso_5/silver/bronze_to_silver_home_credit.py \\
             --bronze-bucket {bronze_bucket} \\
