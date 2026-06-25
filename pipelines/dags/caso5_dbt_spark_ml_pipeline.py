@@ -36,9 +36,9 @@ with DAG(
 
     # 1. Tarea de dbt: Ejecutar el modelo fct_home_credit_consolidated
     # Usamos --profiles-dir para indicarle a dbt dónde encontrar profiles.yml
-    dbt_run_gold = BashOperator(
-        task_id='dbt_run_gold_table',
-        bash_command='cd /opt/airflow/pipelines/dbt_transform && dbt run --select fct_home_credit_consolidated --profiles-dir .',
+    dbt_run_intermediate = BashOperator(
+        task_id='dbt_run_intermediate_table',
+        bash_command='cd /opt/airflow/pipelines/dbt_transform && dbt run --select int_home_credit_consolidated --profiles-dir .',
     )
 
     # 2. Tarea de Spark ML: Calcular Feature Importance usando la Tabla Gorda
@@ -51,8 +51,8 @@ with DAG(
         --total-executor-cores 10 \\
         --executor-memory 1500M \\
         --master spark://21.0.2.203:7077 \\
-        /opt/spark/pipelines/tasks-spark/caso_5/diamond/gold_to_diamond_ml.py \\
-        --gold-path s3a://{silver_bucket}/gold/fct_home_credit_consolidated/ \\
+        /opt/spark/pipelines/tasks-spark/caso_5/diamond/intermediate_feature_selection.py \\
+        --intermediate-path s3a://{silver_bucket}/intermediate/int_home_credit_consolidated/ \\
         --diamond-path s3a://{diamond_bucket}/diamond/home_credit_refined/ \\
         --report-path s3a://{diamond_bucket}/reports/diamond/home_credit_ml_report.md \\
         --target-col is_default
@@ -66,4 +66,4 @@ with DAG(
     )
 
     # Dependencia: Primero Glue, luego dbt (Athena), luego Spark (ML)
-    run_glue_crawler >> dbt_run_gold >> spark_ml_feature_selection
+    run_glue_crawler >> dbt_run_intermediate >> spark_ml_feature_selection

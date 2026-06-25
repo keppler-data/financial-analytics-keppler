@@ -19,6 +19,10 @@ models:
   keppler_dbt:
     staging:
       +materialized: view
+    intermediate:
+      +materialized: table
+      +s3_data_dir: s3://keppler-data-architecture/intermediate/
+      +format: parquet
     marts:
       +materialized: table
       +s3_data_dir: s3://keppler-data-architecture/gold/

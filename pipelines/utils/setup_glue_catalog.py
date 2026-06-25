@@ -21,7 +21,7 @@ def setup_catalog():
     glue = boto3.client('glue', region_name='us-east-1')
     s3 = boto3.client('s3', region_name='us-east-1')
     
-    databases = ['keppler_silver', 'keppler_gold', 'keppler_diamond']
+    databases = ['keppler_silver', 'keppler_intermediate', 'keppler_gold', 'keppler_diamond']
     
     for db_name in databases:
         try:
