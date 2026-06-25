@@ -1,131 +1,43 @@
-# ===============================
-# Python 
-# ===============================
-
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual Enviroments
-
+# Entornos virtuales de Python (creados por uv, pip, venv, conda)
 .venv/
 venv/
 env/
 ENV/
-
-**/logs
-master/dags
-airflow/
-
-# =====================================
-# Jupyter
-# =====================================
-
-.ipynb_checkpoints/ 
-
-# ======================================
-# Enviroment Variables 
-# ======================================
-
 .env
-.env.*
-!.env.example
 
-# ================================
-# Logs
-# =================================
+# Cache de Python y archivos compilados
+__pycache__/
+*.py[cod]
+*$py.class
 
-logs/
-*.log
-
-# =========================
-# Airflow 
-# =========================
-
-airflow/logs/
-airflow/airflow.db
-airflow/airflow.cfg
-airflow/webserver_config.py
-
-# Airflow standalone
-standalone_admin_password.txt
-
-# =========================
-# Spark
-# =========================
-spark-warehouse/
-metastore_db/
-
-# Temporary Spark files
-*.crc
-
-# =========================
-# Docker
-# =========================
-docker-compose.override.yml
-
-# =========================
-# VS Code
-# =========================
-.vscode/
-
-# =========================
-# JetBrains
-# =========================
-.idea/
-
-# =========================
-# OS Files
-# =========================
-.DS_Store
-Thumbs.db
-
-# =========================
-# Testing
-# =========================
+# Herramientas de testing y coverage
 .pytest_cache/
 .coverage
 htmlcov/
 
-# =========================
-# Build
-# =========================
-build/
-dist/
-*.egg-info/
+# Logs e información temporal de Airflow y Spark
+**/logs/
+logs/
+airflow/
+master/dags/
+*.log
 
-# =========================
-# Data Files
-# =========================
+# Entornos IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
-# Raw datasets Home Credit
-data/raw/
+# Archivos de SO
+.DS_Store
+Thumbs.db
 
-# Processed outputs
-data/bronze/
-data/silver/
-data/gold/
-data/diamond/
-
-# Local exports
-exports/
-
-# =========================
-# AWS
-# =========================
-.aws/
-
-# =========================
-# Secrets / Keys
-# =========================
-*.pem
-*.key
-*.crt
-*.p12
-
-# =========================
-# Temporary
-# =========================
+# Datos y temporales
+data/
 tmp/
 temp/
-.cache/
+*.csv
+*.parquet
+*.json
+*.zip
+!kaggle.json
