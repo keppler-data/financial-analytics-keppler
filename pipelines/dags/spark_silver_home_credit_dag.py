@@ -37,8 +37,8 @@ with DAG(
     description='Transforma todos los CSV de Home Credit (Bronze) a Parquet (Silver) usando Spark',
     schedule=None,
     catchup=False,
-    # max_active_tasks asegura que solo corran 3 jobs a la vez, para no saturar los 4GB de RAM de los workers
-    max_active_tasks=3,
+    # Procesamiento secuencial: 1 archivo a la vez para darle TODO el clúster
+    max_active_tasks=1,
     tags=['transformation', 'silver', 'spark', 'home_credit', 'ssh'],
 ) as dag:
 
@@ -47,6 +47,8 @@ with DAG(
         spark_command = f"""
         docker exec core-spark-master /opt/spark/bin/spark-submit \\
             --packages org.apache.hadoop:hadoop-aws:3.4.0,com.amazonaws:aws-java-sdk-bundle:1.12.367 \\
+            --total-executor-cores 10 \\
+            --executor-memory 3000M \\
             --master spark://21.0.2.203:7077 \\
             /opt/spark/pipelines/tasks-spark/caso_5/silver/bronze_to_silver_home_credit.py \\
             --bronze-bucket {bronze_bucket} \\
