@@ -32,8 +32,39 @@ master/dags/
 .DS_Store
 Thumbs.db
 
+<<<<<<< HEAD
 # Datos y temporales
 data/
+=======
+# Processed outputs
+data/bronze/
+data/silver/
+data/gold/
+data/diamond/
+
+# Local exports
+exports/
+
+# Local S3 ingestion mirror
+data/local_s3_mirror/
+
+# =========================
+# AWS
+# =========================
+.aws/
+
+# =========================
+# Secrets / Keys
+# =========================
+*.pem
+*.key
+*.crt
+*.p12
+
+# =========================
+# Temporary
+# =========================
+>>>>>>> 17195f140e64e871ad23703dbd722b80fba0e060
 tmp/
 temp/
 *.csv

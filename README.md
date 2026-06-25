@@ -339,6 +339,13 @@ Core technologies used by the platform:
 
 ---
 
+# Ingestion
+
+See `ingestion/README.md` for the local dataset ingestion flow and the S3 upload
+commands.
+
+---
+
 # Project Goal
 
 Build a scalable and maintainable Financial Risk Data Platform capable of supporting:
