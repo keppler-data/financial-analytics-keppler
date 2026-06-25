@@ -46,7 +46,7 @@ with DAG(
         # Comando que ejecuta spark-submit dentro del contenedor core-spark-master
         spark_command = f"""
         docker exec core-spark-master /opt/spark/bin/spark-submit \\
-            --packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \\
+            --packages org.apache.hadoop:hadoop-aws:3.4.0,com.amazonaws:aws-java-sdk-bundle:1.12.367 \\
             --master spark://21.0.2.203:7077 \\
             /opt/spark/pipelines/tasks-spark/caso_5/silver/bronze_to_silver_home_credit.py \\
             --bronze-bucket {bronze_bucket} \\
