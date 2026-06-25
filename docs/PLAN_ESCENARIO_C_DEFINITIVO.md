@@ -35,15 +35,23 @@ flowchart TD
     subgraph DataLake ["AWS S3 / Data Lake"]
         B[(Bronze)]:::bronze
         S[(Silver)]:::silver
-        G[(Gold)]:::gold
-        DW[(Diamond)]:::diamond
+        I[(Intermediate)]:::silver
+        G[(Gold: Star Schema)]:::gold
+        DW[(Diamond: Feature Store)]:::diamond
     end
 
     subgraph Procesamiento ["Motor Analítico (Airflow)"]
-        SparkELT[Spark ELT]:::silver
-        dbtGold[dbt: JOIN Home Credit]:::gold
-        SparkML[Spark ML: Random Forest]:::ml
-        dbtDW[dbt: Esquema Estrella]:::diamond
+        SparkELT[Spark ELT: Limpieza Genérica]:::silver
+        dbtInt[dbt: Consolidación por Banco (Paralelo)]:::silver
+        SparkML_HC[Spark ML: RF Home Credit]:::ml
+        SparkML_LC[Spark ML: RF Lending Club]:::ml
+        SparkML_GMSC[Spark ML: RF Give Me Some Credit]:::ml
+        SparkML_LP[Spark ML: RF Loan Prediction]:::ml
+        dbtGold[dbt: Estandarización a Esquema Estrella]:::gold
+    end
+
+    subgraph MLOps ["Archivos de Reporte"]
+        JSONs[Reportes Top Variables .json y .md]
     end
 
     subgraph Consumo ["Capa de Negocio y Operación"]
@@ -53,25 +61,24 @@ flowchart TD
         API[API REST]:::app
     end
 
-    HC --> B
-    LClub --> B
-    GMSC --> B
-    LP --> B
+    HC & LClub & GMSC & LP --> B
+    B --> SparkELT
+    SparkELT --> S
     
-    B -->|Limpieza| SparkELT
-    SparkELT -->|Escribe Parquet| S
+    S --> dbtInt
+    dbtInt --> I
     
-    S -->|Flujo 1: Solo Home Credit| dbtGold
+    I --> SparkML_HC & SparkML_LC & SparkML_GMSC & SparkML_LP
+    SparkML_HC & SparkML_LC & SparkML_GMSC & SparkML_LP --> JSONs
+    JSONs -.-> |"Macros de dbt leen el JSON"| dbtGold
+    
+    I --> dbtGold
     dbtGold --> G
-    G --> SparkML
-    SparkML -->|Descubre Top 20 Variables| dbtDW
     
-    S -->|Flujo 2: Los 4 Bancos| dbtDW
-    dbtDW -->|Filtra Top 20 y crea Hechos/Dimensiones| DW
-    
+    G --> DW
     DW -.-> Athena
-    Athena -->|Conector ODBC| PBI
-    DW -->|Sincronización Diaria| PG
+    Athena --> PBI
+    G --> PG
     PG --> API
 ```
 

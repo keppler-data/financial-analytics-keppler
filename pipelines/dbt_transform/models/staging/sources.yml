@@ -11,3 +11,7 @@ sources:
       - name: installments_payments
       - name: pos_cash_balance
       - name: credit_card_balance
+      # Otros Bancos (Nombres inferidos de archivos origen)
+      - name: cs_training
+      - name: accepted_2007_to_2018q4
+      - name: train_u6lujux_cvtuz9i
