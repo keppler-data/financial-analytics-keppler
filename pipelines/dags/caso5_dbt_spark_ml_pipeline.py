@@ -28,6 +28,12 @@ with DAG(
     tags=['dbt', 'athena', 'spark', 'machine_learning', 'caso_5'],
 ) as dag:
 
+    # 0. Tarea de AWS Glue: Actualizar catálogo en Athena
+    run_glue_crawler = BashOperator(
+        task_id='run_glue_crawler',
+        bash_command='python /opt/airflow/pipelines/utils/setup_glue_catalog.py',
+    )
+
     # 1. Tarea de dbt: Ejecutar el modelo fct_home_credit_consolidated
     # Usamos --profiles-dir para indicarle a dbt dónde encontrar profiles.yml
     dbt_run_gold = BashOperator(
@@ -59,5 +65,5 @@ with DAG(
         cmd_timeout=3600
     )
 
-    # Dependencia: Primero dbt (Athena), luego Spark (ML)
-    dbt_run_gold >> spark_ml_feature_selection
+    # Dependencia: Primero Glue, luego dbt (Athena), luego Spark (ML)
+    run_glue_crawler >> dbt_run_gold >> spark_ml_feature_selection

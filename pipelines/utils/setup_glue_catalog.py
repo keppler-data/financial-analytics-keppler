@@ -82,10 +82,25 @@ def setup_catalog():
     print(f"Iniciando Crawler '{crawler_name}' para registrar las tablas Parquet...")
     try:
         glue.start_crawler(Name=crawler_name)
-        print("Crawler iniciado. Este proceso mapeará todos los archivos Parquet en S3 a tablas en la base de datos keppler_silver de Athena.")
-        print("Puede tomar unos minutos. Revisa el progreso en la consola de AWS Glue.")
+    except glue.exceptions.CrawlerRunningException:
+        print("El crawler ya está corriendo.")
     except Exception as e:
-        print(f"No se pudo iniciar el crawler (posiblemente ya está corriendo). Detalles: {e}")
+        print(f"No se pudo iniciar el crawler. Detalles: {e}")
+        return
+
+    print("Esperando a que el crawler termine (esto puede tomar un par de minutos)...")
+    while True:
+        response = glue.get_crawler(Name=crawler_name)
+        state = response['Crawler']['State']
+        if state == 'READY':
+            print("¡Crawler terminó con éxito! Las tablas están listas en Athena.")
+            break
+        elif state in ['RUNNING', 'STOPPING']:
+            print(f"Estado del crawler: {state}... esperando 15 segundos.")
+            time.sleep(15)
+        else:
+            print(f"Estado desconocido: {state}. Saliendo del loop.")
+            break
 
 if __name__ == "__main__":
     setup_catalog()
