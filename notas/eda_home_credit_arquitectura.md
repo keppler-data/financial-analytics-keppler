@@ -43,6 +43,23 @@ Esto es indispensable porque Airflow intercepta estos logs y, mediante la config
 Como parte extra de la optimización del caso, el código original de ingesta (descarga de Kaggle -> descompresión de ZIP -> conversión a Parquet -> subida a S3) que estaba innecesariamente fragmentado en 5 módulos (aumentando la fragilidad de importaciones y dificultad de soporte), fue **unificado en un único script** (`ingestion_task.py`).
 Se aseguró además la limpieza temporal y persistente de carpetas usando bloques `try / finally` para evitar discos llenos en los nodos.
 
+## 5. Prevención de Crash en el DAG-Processor (Imports Diferidos)
+
+Durante el despliegue a producción, nos enfrentamos a dos errores críticos que hacían colapsar todos los DAGs y que se resolvieron de la siguiente forma:
+
+1. **Error de `pkg_resources` en Python 3.12:**
+   La imagen de Airflow 3.2 utiliza Python 3.12, versión en la cual se removió la librería base `setuptools` (que provee `pkg_resources`). Como `ydata-profiling` la necesita, Python arrojaba un error mortal. **Solución:** Se añadió explícitamente `setuptools` en el `.env` (`EXTRA_REQUIREMENTS`) para que la imagen de Docker la instale durante el _build_.
+
+2. **Técnica de *Deferred Imports* (Imports Diferidos):**
+   Airflow escanea los archivos en la carpeta de DAGs constantemente. Si tenemos un `import` muy pesado (como `ydata-profiling`) en las primeras líneas de un script, Airflow intentará cargarlo solo para leer la estructura, lo que tumba el proceso si hay algún conflicto de librerías.
+   **Solución experta:** Se movió el `import` de la librería pesada **hacia adentro de la función de ejecución**:
+   ```python
+   def generate_single_eda(s3_key: str):
+       from ydata_profiling import ProfileReport # Import diferido
+       ...
+   ```
+   Esto "engaña" a Airflow: el procesador central ignora la librería pesada, y solo el Worker que ejecute la tarea se encargará de importarla. Es una regla de oro para el código en entornos distribuidos.
+
 ## Archivos Clave Modificados:
 - **`pipelines/dags/eda_s3_report.py`**: El DAG base reescrito bajo arquitectura moderna TaskFlow para aprovechar el `.expand()`.
 - **`pipelines/tasks/caso_5/eda/homeCredit/eda_task.py`**: Módulo con la lógica modularizada para extraer CSV, procesar ProfileReport y cargar la capa de reports a S3.
