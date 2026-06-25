@@ -144,6 +144,7 @@ def main():
 
     # 4. Transformaciones
     df = df.dropDuplicates()
+    df.cache()  # CACHE: Evita re-procesar (y re-barajar) el DataFrame en los count() y write() siguientes
     dedup_rows = df.count()
     duplicates_dropped = original_rows - dedup_rows
 
