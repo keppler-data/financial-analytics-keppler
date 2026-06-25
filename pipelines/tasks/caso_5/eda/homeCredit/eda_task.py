@@ -2,7 +2,6 @@ import boto3
 import pandas as pd
 import os
 import logging
-from ydata_profiling import ProfileReport
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +31,11 @@ def generate_single_eda(s3_key: str):
     Descarga un solo archivo CSV desde S3, genera el reporte EDA con ydata-profiling
     y lo sube de regreso a S3. Diseñado para ejecutarse como una tarea mapeada dinámicamente.
     """
+    import boto3
+    import pandas as pd
+    import os
+    from ydata_profiling import ProfileReport
+    
     s3 = boto3.client("s3")
     
     filename = s3_key.split("/")[-1]

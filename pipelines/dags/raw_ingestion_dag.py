@@ -50,7 +50,7 @@ from airflow.sdk import dag, task
 
 from pendulum import datetime
 
-from pipelines.tasks.homeCredit.ingestion_task import (
+from pipelines.tasks.caso_5.eda.homeCredit.ingestion_task import (
     ingest_home_credit,
 )
 
