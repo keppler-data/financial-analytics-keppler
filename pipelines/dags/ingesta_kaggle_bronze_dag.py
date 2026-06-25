@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 
-from pipelines.tasks.caso_5.download_from_kaggle import (
+from pipelines.tasks.caso_5.ingestion.download_from_kaggle import (
     task_ingest_lending_club,
     task_ingest_loan_prediction
 )
-from pipelines.tasks.caso_5.download_from_huggingface import (
+from pipelines.tasks.caso_5.ingestion.download_from_huggingface import (
     task_ingest_home_credit,
     task_ingest_give_me_some_credit
 )
