@@ -1,18 +1,22 @@
-# Plan Estratégico: Escenario C (Enfoque Híbrido Orientado a ML)
+# Plan Estratégico: Arquitectura de Doble Flujo (Dual-Flow)
 
-Este documento define la arquitectura, el flujo de datos y los pasos de ejecución para resolver el Caso 5 integrando 4 fuentes bancarias heterogéneas mediante un Data Warehouse corporativo (Esquema Estrella) impulsado por el descubrimiento de variables con Machine Learning.
+Este documento redefine la arquitectura y el flujo de datos para resolver el Caso 5. Evolucionamos desde el "Escenario C" original hacia un **Enfoque de Doble Flujo**, separando la lógica de Negocio (BI) de la lógica de Machine Learning para respetar la naturaleza única de los 4 bancos heterogéneos.
 
-## 1. El Reto y La Solución (Por qué el Escenario C)
+## 1. El Reto y La Solución (Por qué cambiamos el rumbo)
 
-Teníamos 4 bancos con columnas totalmente diferentes (ej. Home Credit con 122 columnas, Give Me Some Credit con 10). Construir un Data Warehouse ciegamente uniendo todas las columnas generaría una tabla llena de valores nulos (basura) que arruinaría cualquier modelo predictivo y confundiría a los analistas de BI.
+**El problema original:** 
+Teníamos 4 bancos con columnas totalmente diferentes. El plan anterior proponía usar el banco más complejo (Home Credit) para descubrir un "Top 20" de variables predictivas y obligar a los otros 3 bancos a encajar en esas 20 columnas. 
+*El fallo analítico:* Si la variable más predictiva de Home Credit es `EXT_SOURCE_3`, pero *Give Me Some Credit* no tiene esa columna, es imposible filtrarla. Forzar un solo molde arruina el poder predictivo de cada banco.
 
-**La Solución (Escenario C):** 
-Utilizamos el banco más complejo (Home Credit) como "conejillo de indias" para entrenar un modelo de Machine Learning y descubrir cuáles son las **20 columnas que realmente predicen si un cliente va a entrar en mora**.
-Una vez que conocemos el "secreto" de la morosidad (ese Top 20), ignoramos las otras 100 columnas basura, y vamos a los otros 3 bancos a extraer **únicamente esos 20 conceptos**. Esto nos permite construir un Esquema Estrella altamente estandarizado, limpio y con un inmenso poder predictivo.
+**La Solución (Arquitectura de Doble Flujo):**
+Separamos los objetivos en dos caminos independientes que nacen desde la capa Silver:
 
-## 2. Diagrama de Flujo y Arquitectura Mejorado
+1. **Flujo de Negocio (BI / Data Warehouse):** Usamos **dbt** para buscar el *Mínimo Común Múltiplo* entre los 4 bancos. Extraemos **solo conceptos universales** (edad, ingresos, monto del préstamo, estado de mora) para construir un Esquema Estrella estandarizado (`DIM_CUSTOMER`, `FACT_LOAN`). Esto permite a la gerencia ver reportes globales en Power BI.
+2. **Flujo de Machine Learning (Spark ML):** No forzamos moldes. Entrenamos **4 modelos de Random Forest independientes**, uno para cada banco, aprovechando el 100% de las columnas nativas de cada dataset. Esto maximiza la precisión predictiva para cada institución.
 
-A continuación, el flujo de vida del dato desde los bancos hasta la API transaccional, destacando el "Bucle de Descubrimiento" de ML y la fase de consolidación.
+## 2. Diagrama de Flujo y Arquitectura Dual
+
+El siguiente diagrama ilustra cómo la capa `Intermediate` se bifurca: el camino SQL (dbt) hacia la capa Gold para analítica, y el camino Python (Spark) hacia el entrenamiento de modelos.
 
 ```mermaid
 flowchart TD
@@ -26,96 +30,101 @@ flowchart TD
     classDef bi fill:#f2c811,stroke:#333,color:#000
 
     subgraph Fuentes ["Bancos (Fuentes Heterogéneas)"]
-        HC[Home Credit]:::source
-        LClub[Lending Club]:::source
-        GMSC[Give Me Some Credit]:::source
-        LP[Loan Prediction]:::source
+        HC["Home Credit"]:::source
+        LClub["Lending Club"]:::source
+        GMSC["Give Me Some Credit"]:::source
+        LP["Loan Prediction"]:::source
     end
 
     subgraph DataLake ["AWS S3 / Data Lake"]
-        B[(Bronze)]:::bronze
-        S[(Silver)]:::silver
-        I[(Intermediate)]:::silver
-        G[(Gold: Star Schema)]:::gold
-        DW[(Diamond: Feature Store)]:::diamond
+        B[("Bronze")]:::bronze
+        S[("Silver")]:::silver
+        I[("Intermediate")]:::silver
+        G[("Gold: Star Schema")]:::gold
+        DW[("Diamond: Feature Store")]:::diamond
     end
 
     subgraph Procesamiento ["Motor Analítico (Airflow)"]
-        SparkELT[Spark ELT: Limpieza Genérica]:::silver
-        dbtInt[dbt: Consolidación por Banco (Paralelo)]:::silver
-        SparkML_HC[Spark ML: RF Home Credit]:::ml
-        SparkML_LC[Spark ML: RF Lending Club]:::ml
-        SparkML_GMSC[Spark ML: RF Give Me Some Credit]:::ml
-        SparkML_LP[Spark ML: RF Loan Prediction]:::ml
-        dbtGold[dbt: Estandarización a Esquema Estrella]:::gold
+        SparkELT["Spark ELT: Limpieza Genérica"]:::silver
+        dbtInt["dbt: Consolidación por Banco (Paralelo)"]:::silver
+        
+        %% Doble Flujo %%
+        dbtGold["dbt: Esquema Estrella (Mínimo Común Múltiplo)"]:::gold
+        
+        SparkML_HC["Spark ML: RF Home Credit"]:::ml
+        SparkML_LC["Spark ML: RF Lending Club"]:::ml
+        SparkML_GMSC["Spark ML: RF Give Me Some Credit"]:::ml
+        SparkML_LP["Spark ML: RF Loan Prediction"]:::ml
     end
 
-    subgraph MLOps ["Archivos de Reporte"]
-        JSONs[Reportes Top Variables .json y .md]
+    subgraph MLOps ["Resultados Predictivos"]
+        Modelos["Modelos y Feature Importances por Banco"]
     end
 
     subgraph Consumo ["Capa de Negocio y Operación"]
-        Athena[AWS Athena]:::diamond
-        PBI[Power BI]:::bi
-        PG[(PostgreSQL)]:::app
-        API[API REST]:::app
+        Athena["AWS Athena"]:::diamond
+        PBI["Power BI"]:::bi
+        PG[("PostgreSQL")]:::app
+        API["API REST"]:::app
     end
 
+    %% Ingesta y Limpieza %%
     HC & LClub & GMSC & LP --> B
     B --> SparkELT
     SparkELT --> S
     
+    %% Intermediate %%
     S --> dbtInt
     dbtInt --> I
     
+    %% Flujo 1: Machine Learning (Feature Discovery) %%
     I --> SparkML_HC & SparkML_LC & SparkML_GMSC & SparkML_LP
-    SparkML_HC & SparkML_LC & SparkML_GMSC & SparkML_LP --> JSONs
-    JSONs -.-> |"Macros de dbt leen el JSON"| dbtGold
+    SparkML_HC & SparkML_LC & SparkML_GMSC & SparkML_LP --> Modelos
     
+    %% Flujo 2: Negocio y BI (Esquema Estrella) %%
+    Modelos -.->|"dbt lee los JSON con los Top Features descubiertos por ML"| dbtGold
     I --> dbtGold
     dbtGold --> G
-    
     G --> DW
     DW -.-> Athena
     Athena --> PBI
+    
+    %% Operacional %%
     G --> PG
     PG --> API
 ```
 
 ## 3. ¿Alcanzaremos el "Modelo Esperado" (Esquema Estrella)?
 
-**¡Sí, y de una forma mucho más inteligente!**
-
-El diagrama que tus compañeros plantearon (`modelo_esperado.webp`) propone una estructura clásica con `FACT_LOAN`, `FACT_PAYMENT`, `DIM_CUSTOMER`, `DIM_PRODUCT`, etc.
-
-*   **Sin el Escenario C:** Intentar llenar `DIM_CUSTOMER` habría sido una pesadilla intentando adivinar qué columnas servían de las 300 disponibles entre todos los bancos.
-*   **Con el Escenario C:** Nuestro `DIM_CUSTOMER` tendrá exactamente las columnas demográficas que Spark ML demostró matemáticamente que importan (ej. `age`, `debt_ratio`, `income`). Nuestro `FACT_LOAN` tendrá los montos y el historial de pagos. Habremos cumplido su diseño arquitectónico, pero basándonos en Ciencia de Datos, no en adivinanzas.
+**Sí.** Cumpliremos con la estructura de `FACT_LOAN` y `DIM_CUSTOMER`.
+Sin embargo, en lugar de llenarlos con adivinanzas o forzar columnas incompatibles, el Esquema Estrella contendrá **estrictamente los conceptos demográficos y financieros universales** compartidos por los 4 bancos. 
 
 ## 4. El Flujo hacia la API (El Mundo Transaccional)
 
-El Data Warehouse (Diamond en S3) es perfecto para Power BI porque puede escanear miles de millones de registros para hacer promedios y gráficas. Pero S3 es pésimo para consultar *un solo cliente* en tiempo real. 
+El Data Warehouse (Diamond en S3) es perfecto para Power BI, pero ineficiente para consultar *un solo cliente* en tiempo real. 
 
 Por eso la arquitectura define el paso final: **PostgreSQL**.
-1. Cada noche, Airflow tomará la versión final de `DIM_CUSTOMER` y `FACT_LOAN` (que ya tienen a todos los clientes de todos los bancos perfilados y con su probabilidad de impago) y hará un volcado (UPSERT) a nuestra base de datos PostgreSQL.
-2. Construiremos una **API REST (con FastAPI o Supabase)** que se conecte a PostgreSQL.
-3. Cuando el Banco A quiera prestarle dinero a "Juan Pérez", su sistema consultará nuestra API. La API buscará a "Juan Pérez" en Postgres (lo cual toma 5 milisegundos) y le responderá: *"Juan Pérez ya tiene un crédito activo en el Banco B y tiene un 80% de probabilidad de impago. Denegado."*
+1. Cada noche, Airflow tomará la versión final de `DIM_CUSTOMER` y `FACT_LOAN` y hará un volcado (UPSERT) a nuestra base de datos PostgreSQL.
+2. Construiremos una **API REST (con FastAPI o Supabase)** conectada a PostgreSQL.
+3. Cuando el Banco A quiera prestarle dinero a "Juan Pérez", su sistema consultará nuestra API. Ésta responderá en milisegundos si Juan tiene créditos activos en otros bancos y su perfil de riesgo.
 
 ---
 
-## 5. Hoja de Ruta (Roadmap Ejecutivo)
+## 5. Hoja de Ruta (Roadmap de Ejecución)
 
-### Fase 1: Descubrimiento (COMPLETADA ✅)
-*   [x] Ingesta y limpieza en Silver.
-*   [x] Construcción de la Tabla Gorda de Home Credit (Capa Gold).
-*   [x] Entrenamiento de Spark ML y generación del reporte del Top 20.
+### Fase 1: Limpieza e Ingesta (COMPLETADA ✅)
+*   [x] Transformación Bronze a Silver (Parquet, limpieza de nulos, estandarización básica).
+*   [x] Configuración dinámica de DAGs en Airflow para procesar masivamente sin `TIME_WAIT`.
 
-### Fase 2: Consolidación Analítica (DW - ACTUAL ⏳)
-*   [ ] Leer el reporte Markdown de Spark y extraer el Top 20 de variables.
-*   [ ] Crear modelos dbt (`intermediate/`) que tomen a cada banco y mapeen sus columnas al estándar del Top 20.
-*   [ ] Crear los modelos dbt de Esquema Estrella (`marts/dim_customer`, `marts/fact_loan`) en la capa Diamond, uniendo los 4 bancos estandarizados.
+### Fase 2: Consolidación de Negocio - dbt (ACTUAL ⏳)
+*   [ ] Crear modelos dbt (`intermediate/`) para mapear las columnas de cada banco hacia los "Conceptos Universales" (Target, Edad, Ingresos, Monto).
+*   [ ] Crear modelos dbt de Esquema Estrella (`marts/dim_customer`, `marts/fact_loan`) uniendo (UNION ALL) los 4 bancos estandarizados.
 
-### Fase 3: Activación y Operación (FUTURO 🚀)
+### Fase 3: Descubrimiento Machine Learning - Spark ML (PRÓXIMO 🎯)
+*   [ ] Desarrollar script genérico en Spark ML (`intermediate_feature_selection.py`) que reciba el nombre del banco, aísle su variable `target` para evitar Data Leakage, y entrene un Random Forest.
+*   [ ] Orquestar en Airflow el entrenamiento en paralelo/secuencial de los 4 modelos y guardar las métricas de importancia en S3.
+
+### Fase 4: Activación y Operación (FUTURO 🚀)
 *   [ ] Desplegar la base de datos PostgreSQL (OLTP).
 *   [ ] Crear script en Airflow (`diamond_to_postgres.py`) para sincronizar datos a PostgreSQL.
-*   [ ] Desarrollar la API REST en FastAPI.
-*   [ ] Documentar Swagger para que los "Bancos" se integren.
+*   [ ] Desarrollar la API REST en FastAPI y documentar el Swagger.

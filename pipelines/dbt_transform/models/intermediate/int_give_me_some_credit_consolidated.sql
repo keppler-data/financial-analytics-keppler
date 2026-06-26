@@ -6,6 +6,8 @@
     format='parquet'
 ) }}
 
--- Modelo base temporal. Se reemplazará con la lógica JOIN real cuando el pipeline Silver esté completamente auditado.
-SELECT * 
+-- Modelo base temporal. 
+SELECT 
+    SeriousDlqin2yrs as is_default,
+    * 
 FROM {{ source('silver', 'cs_training') }}

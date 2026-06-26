@@ -6,6 +6,8 @@
     format='parquet'
 ) }}
 
--- Modelo base temporal. Se reemplazará con la lógica JOIN real cuando el pipeline Silver esté completamente auditado.
-SELECT * 
+-- Modelo base temporal.
+SELECT 
+    CASE WHEN Loan_Status = 'N' THEN 1 ELSE 0 END as is_default,
+    * 
 FROM {{ source('silver', 'train_u6lujux_cvtuz9i') }}

@@ -33,6 +33,7 @@ prev_app_agg AS (
 )
 
 SELECT 
+    a.TARGET as is_default,
     a.*,
     
     -- Variables agregadas de Bureau
