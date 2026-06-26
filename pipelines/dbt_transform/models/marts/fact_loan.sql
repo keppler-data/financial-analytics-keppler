@@ -30,8 +30,8 @@ lending_club AS (
 
 give_me_some_credit AS (
     SELECT
-        to_hex(md5(to_utf8(concat(cast(unnamed_0 as varchar), 'GMSC')))) as loan_key,
-        to_hex(md5(to_utf8(cast(unnamed_0 as varchar)))) as customer_key,
+        to_hex(md5(to_utf8(concat(cast(c0 as varchar), 'GMSC')))) as loan_key,
+        to_hex(md5(to_utf8(cast(c0 as varchar)))) as customer_key,
         'Give Me Some Credit' as source_system,
         is_default as target,
         cast(null as double) as loan_amount,

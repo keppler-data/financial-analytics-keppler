@@ -7,7 +7,7 @@
 ) }}
 
 SELECT
-    unnamed_0 as id,
+    c0 as id,
     is_default,
     
     {% set features = var('give_me_some_credit_features', []) %}

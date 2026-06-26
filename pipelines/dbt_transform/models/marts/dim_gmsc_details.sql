@@ -7,6 +7,6 @@
 ) }}
 
 SELECT
-    to_hex(md5(to_utf8(concat(cast(unnamed_0 as varchar), 'GMSC')))) as loan_key,
+    to_hex(md5(to_utf8(concat(cast(c0 as varchar), 'GMSC')))) as loan_key,
     *
 FROM {{ ref('int_give_me_some_credit_consolidated') }}
