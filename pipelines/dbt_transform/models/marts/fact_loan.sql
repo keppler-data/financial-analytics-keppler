@@ -12,8 +12,8 @@ WITH home_credit AS (
         to_hex(md5(to_utf8(cast(sk_id_curr as varchar)))) as customer_key,
         'Home Credit' as source_system,
         is_default as target,
-        cast(amt_credit as double) as loan_amount,
-        cast(amt_income_total as double) as annual_income
+        try_cast(amt_credit as double) as loan_amount,
+        try_cast(amt_income_total as double) as annual_income
     FROM {{ ref('int_home_credit_consolidated') }}
 ),
 
@@ -23,8 +23,8 @@ lending_club AS (
         to_hex(md5(to_utf8(cast(emp_title as varchar)))) as customer_key,
         'Lending Club' as source_system,
         is_default as target,
-        cast(loan_amnt as double) as loan_amount,
-        cast(annual_inc as double) as annual_income
+        try_cast(loan_amnt as double) as loan_amount,
+        try_cast(annual_inc as double) as annual_income
     FROM {{ ref('int_lending_club_consolidated') }}
 ),
 
@@ -35,7 +35,7 @@ give_me_some_credit AS (
         'Give Me Some Credit' as source_system,
         is_default as target,
         cast(null as double) as loan_amount,
-        cast(cast(monthlyincome as double) * 12 as double) as annual_income
+        try_cast(monthlyincome as double) * 12 as annual_income
     FROM {{ ref('int_give_me_some_credit_consolidated') }}
 ),
 
@@ -45,8 +45,8 @@ loan_prediction AS (
         to_hex(md5(to_utf8(cast(loan_id as varchar)))) as customer_key,
         'Loan Prediction' as source_system,
         is_default as target,
-        cast(cast(loanamount as double) * 1000 as double) as loan_amount,
-        cast(cast(applicantincome as double) * 12 as double) as annual_income
+        try_cast(loanamount as double) * 1000 as loan_amount,
+        try_cast(applicantincome as double) * 12 as annual_income
     FROM {{ ref('int_loan_prediction_consolidated') }}
 )
 

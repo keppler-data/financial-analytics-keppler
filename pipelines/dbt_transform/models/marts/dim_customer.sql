@@ -11,8 +11,8 @@ WITH home_credit AS (
         to_hex(md5(to_utf8(cast(sk_id_curr as varchar)))) as customer_key,
         cast(sk_id_curr as varchar) as customer_id,
         'Home Credit' as source_system,
-        cast(years_birth as integer) as age_years,
-        cast(years_employed as integer) as employment_years,
+        try_cast(years_birth as integer) as age_years,
+        try_cast(years_employed as integer) as employment_years,
         cast(code_gender as varchar) as gender
     FROM {{ ref('int_home_credit_consolidated') }}
 ),
@@ -33,7 +33,7 @@ give_me_some_credit AS (
         to_hex(md5(to_utf8(cast(c0 as varchar)))) as customer_key,
         cast(c0 as varchar) as customer_id,
         'Give Me Some Credit' as source_system,
-        cast(age as integer) as age_years,
+        try_cast(age as integer) as age_years,
         cast(null as integer) as employment_years,
         cast(null as varchar) as gender
     FROM {{ ref('int_give_me_some_credit_consolidated') }}
