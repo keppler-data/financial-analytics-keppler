@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.providers.ssh.operators.ssh import SSHOperator
-from airflow.sdk import Variable
+from airflow.models import Variable
 
 # Argumentos por defecto del DAG
 default_args = {
