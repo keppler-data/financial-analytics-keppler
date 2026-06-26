@@ -20,11 +20,10 @@ diamond_bucket = Variable.get("DIAMOND_BUCKET_NAME", default_var=silver_bucket)
 
 def build_spark_command(dataset_name, intermediate_folder):
     return f"""
-    docker exec core-spark-master /opt/spark/bin/spark-submit \\
+    docker exec -e AWS_DEFAULT_REGION=us-east-1 core-spark-master /opt/spark/bin/spark-submit \\
         --packages org.apache.hadoop:hadoop-aws:3.4.0,com.amazonaws:aws-java-sdk-bundle:1.12.367 \\
-        --conf spark.driver.port=7078 \\
-        --conf spark.driver.blockManager.port=7079 \\
-        --conf spark.blockManager.port=37000 \\
+        --conf spark.jars.ivy=/opt/spark/work/.ivy \\
+        --conf "spark.driver.host=21.0.2.203" \\
         --total-executor-cores 10 \\
         --executor-memory 1500M \\
         --master spark://21.0.2.203:7077 \\
