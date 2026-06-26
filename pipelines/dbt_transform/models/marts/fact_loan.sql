@@ -35,7 +35,7 @@ give_me_some_credit AS (
         'Give Me Some Credit' as source_system,
         is_default as target,
         cast(null as double) as loan_amount,
-        cast(monthlyincome * 12 as double) as annual_income
+        cast(cast(monthlyincome as double) * 12 as double) as annual_income
     FROM {{ ref('int_give_me_some_credit_consolidated') }}
 ),
 
@@ -45,8 +45,8 @@ loan_prediction AS (
         to_hex(md5(to_utf8(cast(loan_id as varchar)))) as customer_key,
         'Loan Prediction' as source_system,
         is_default as target,
-        cast(loanamount * 1000 as double) as loan_amount,
-        cast(applicantincome * 12 as double) as annual_income
+        cast(cast(loanamount as double) * 1000 as double) as loan_amount,
+        cast(cast(applicantincome as double) * 12 as double) as annual_income
     FROM {{ ref('int_loan_prediction_consolidated') }}
 )
 
