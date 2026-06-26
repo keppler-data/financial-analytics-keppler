@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.providers.ssh.operators.ssh import SSHOperator
-from airflow.models import Variable
+from airflow.sdk import Variable
 
 # Argumentos por defecto del DAG
 default_args = {
@@ -75,7 +75,7 @@ with DAG(
                 --bronze-bucket {bronze_bucket} \\
                 --silver-bucket {silver_bucket} \\
                 --dataset-name {dataset_name} \\
-                --file-name {file_name}
+                --file-name {file_name} 2>&1
             """
 
             task = SSHOperator(
