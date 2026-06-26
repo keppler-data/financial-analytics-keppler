@@ -58,8 +58,8 @@ give_me_some_credit AS (
         cast(null as double) as region_rating_client,
         cast(null as double) as floorsmax_avg
         
-    -- FROM {{ source('keppler_silver', 'give_me_some_credit') }}
-    -- Usamos un dummy hasta que tu pipeline Silver para este banco esté activo
+    -- FROM source('silver', 'cs_training')
+    -- Usamos un dummy hasta que el pipeline Silver para este banco esté activo
     FROM (SELECT 1 as "Unnamed: 0", 30 as age LIMIT 0) AS dummy
 )
 

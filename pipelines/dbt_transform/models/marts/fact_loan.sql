@@ -36,7 +36,7 @@ give_me_some_credit AS (
         DebtRatio as avg_bureau_debt, -- Proxy aproximado
         MonthlyIncome as avg_bureau_credit_sum -- Proxy aproximado
         
-    -- FROM {{ source('keppler_silver', 'give_me_some_credit') }}
+    -- FROM source('silver', 'cs_training')
     -- Usamos un dummy hasta que tu pipeline Silver esté listo
     FROM (SELECT 1 as "Unnamed: 0", 0 as SeriousDlqin2yrs, 0.5 as DebtRatio, 5000 as MonthlyIncome LIMIT 0) AS dummy
 )
