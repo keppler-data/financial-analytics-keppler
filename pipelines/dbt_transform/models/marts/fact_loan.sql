@@ -8,20 +8,31 @@
 
 WITH home_credit AS (
     SELECT 
-        -- Claves
         md5(concat(cast(sk_id_curr as varchar), 'HC')) as loan_key,
         md5(cast(sk_id_curr as varchar)) as customer_key,
         'Home Credit' as source_system,
-        
-        -- Target de Morosidad (Para entrenamiento y validación final)
         is_default as target,
         
-        -- Variables de Negocio (Monto y Crédito Buro)
-        amt_goods_price,
-        avg_bureau_debt,
-        avg_bureau_credit_sum
+        -- Business Mappings
+        cast(AMT_CREDIT as double) as loan_amount,
+        cast(AMT_INCOME_TOTAL as double) as annual_income,
+        cast(DAYS_BIRTH / -365.0 as integer) as age_years
         
     FROM {{ ref('int_home_credit_consolidated') }}
+),
+
+lending_club AS (
+    SELECT 
+        md5(concat(cast(id as varchar), 'LC')) as loan_key,
+        md5(cast(emp_title as varchar)) as customer_key, -- Proxy since there is no customer id
+        'Lending Club' as source_system,
+        is_default as target,
+        
+        cast(loan_amnt as double) as loan_amount,
+        cast(annual_inc as double) as annual_income,
+        cast(null as integer) as age_years
+        
+    FROM {{ ref('int_lending_club_consolidated') }}
 ),
 
 give_me_some_credit AS (
@@ -29,18 +40,33 @@ give_me_some_credit AS (
         md5(concat(cast("Unnamed: 0" as varchar), 'GMSC')) as loan_key,
         md5(cast("Unnamed: 0" as varchar)) as customer_key,
         'Give Me Some Credit' as source_system,
+        is_default as target,
         
-        -- Mapeo
-        SeriousDlqin2yrs as target,
-        cast(null as double) as amt_goods_price,
-        DebtRatio as avg_bureau_debt, -- Proxy aproximado
-        MonthlyIncome as avg_bureau_credit_sum -- Proxy aproximado
+        cast(null as double) as loan_amount,
+        cast(MonthlyIncome * 12 as double) as annual_income,
+        cast(age as integer) as age_years
         
-    -- FROM source('silver', 'cs_training')
-    -- Usamos un dummy hasta que tu pipeline Silver esté listo
-    FROM (SELECT 1 as "Unnamed: 0", 0 as SeriousDlqin2yrs, 0.5 as DebtRatio, 5000 as MonthlyIncome LIMIT 0) AS dummy
+    FROM {{ ref('int_give_me_some_credit_consolidated') }}
+),
+
+loan_prediction AS (
+    SELECT
+        md5(concat(cast(Loan_ID as varchar), 'LP')) as loan_key,
+        md5(cast(Loan_ID as varchar)) as customer_key,
+        'Loan Prediction' as source_system,
+        is_default as target,
+        
+        cast(LoanAmount * 1000 as double) as loan_amount,
+        cast(ApplicantIncome * 12 as double) as annual_income,
+        cast(null as integer) as age_years
+        
+    FROM {{ ref('int_loan_prediction_consolidated') }}
 )
 
 SELECT * FROM home_credit
 UNION ALL
+SELECT * FROM lending_club
+UNION ALL
 SELECT * FROM give_me_some_credit
+UNION ALL
+SELECT * FROM loan_prediction

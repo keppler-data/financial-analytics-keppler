@@ -85,5 +85,11 @@ with DAG(
         cmd_timeout=3600
     )
 
-    # Dependencia: Primero Glue, luego dbt (Athena), luego Spark ML (Secuencial 1 a 1 para no ahogar memoria)
-    run_glue_crawler >> dbt_run_intermediate >> spark_ml_hc >> spark_ml_lc >> spark_ml_gmsc >> spark_ml_lp
+    # 3. Tarea final de orquestación: Cargar JSONs de S3 y compilar dbt Gold y Diamond
+    dbt_run_gold_diamond = BashOperator(
+        task_id='dbt_run_gold_diamond',
+        bash_command='python /opt/airflow/pipelines/utils/run_dbt_with_ml_vars.py',
+    )
+
+    # Dependencia: Primero Glue, luego dbt (Athena), luego Spark ML (Secuencial 1 a 1 para no ahogar memoria), luego orquestador de ML a dbt
+    run_glue_crawler >> dbt_run_intermediate >> spark_ml_hc >> spark_ml_lc >> spark_ml_gmsc >> spark_ml_lp >> dbt_run_gold_diamond
