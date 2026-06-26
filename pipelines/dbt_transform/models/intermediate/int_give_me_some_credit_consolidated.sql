@@ -7,7 +7,5 @@
 ) }}
 
 -- Modelo base temporal. 
-SELECT 
-    SeriousDlqin2yrs as is_default,
-    * 
+SELECT * 
 FROM {{ source('silver', 'cs_training') }}

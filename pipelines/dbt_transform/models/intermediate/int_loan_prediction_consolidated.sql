@@ -7,7 +7,5 @@
 ) }}
 
 -- Modelo base temporal.
-SELECT 
-    CASE WHEN Loan_Status = 'N' THEN 1 ELSE 0 END as is_default,
-    * 
+SELECT * 
 FROM {{ source('silver', 'train_u6lujux_cvtuz9i') }}
