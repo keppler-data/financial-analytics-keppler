@@ -8,61 +8,52 @@
 
 WITH home_credit AS (
     SELECT 
-        -- Claves
-        md5(cast(sk_id_curr as varchar)) as customer_key,
+        to_hex(md5(to_utf8(cast(sk_id_curr as varchar)))) as customer_key,
         cast(sk_id_curr as varchar) as customer_id,
         'Home Credit' as source_system,
-        
-        -- Top Variables de ML (Demográficas y de Comportamiento)
-        ext_source_1,
-        ext_source_2,
-        ext_source_3,
-        cast(days_birth / -365.0 as integer) as years_birth,
-        cast(days_employed / -365.0 as integer) as years_employed,
-        own_car_age,
-        apartments_mode,
-        floorsmax_mode,
-        region_rating_client_w_city,
-        flag_document_3,
-        flag_emp_phone,
-        cast(days_id_publish / -365.0 as integer) as years_id_publish,
-        livingarea_mode,
-        def_30_cnt_social_circle,
-        region_rating_client,
-        floorsmax_avg
-        
+        cast(days_birth / -365.0 as integer) as age_years,
+        cast(days_employed / -365.0 as integer) as employment_years,
+        cast(code_gender as varchar) as gender
     FROM {{ ref('int_home_credit_consolidated') }}
+),
+
+lending_club AS (
+    SELECT 
+        to_hex(md5(to_utf8(cast(emp_title as varchar)))) as customer_key,
+        cast(emp_title as varchar) as customer_id,
+        'Lending Club' as source_system,
+        cast(null as integer) as age_years,
+        cast(emp_length as varchar) as employment_years_str, -- LC has string e.g. "10+ years"
+        cast(null as varchar) as gender
+    FROM {{ ref('int_lending_club_consolidated') }}
 ),
 
 give_me_some_credit AS (
     SELECT
-        md5(cast("Unnamed: 0" as varchar)) as customer_key,
-        cast("Unnamed: 0" as varchar) as customer_id,
+        to_hex(md5(to_utf8(cast(unnamed_0 as varchar)))) as customer_key,
+        cast(unnamed_0 as varchar) as customer_id,
         'Give Me Some Credit' as source_system,
-        
-        -- Mapeo de lo que existe
-        cast(null as double) as ext_source_1,
-        cast(null as double) as ext_source_2,
-        cast(null as double) as ext_source_3,
-        cast(age as integer) as years_birth,
-        cast(null as integer) as years_employed,
-        cast(null as double) as own_car_age,
-        cast(null as double) as apartments_mode,
-        cast(null as double) as floorsmax_mode,
-        cast(null as double) as region_rating_client_w_city,
-        cast(null as integer) as flag_document_3,
-        cast(null as integer) as flag_emp_phone,
-        cast(null as integer) as years_id_publish,
-        cast(null as double) as livingarea_mode,
-        cast(null as double) as def_30_cnt_social_circle,
-        cast(null as double) as region_rating_client,
-        cast(null as double) as floorsmax_avg
-        
-    -- FROM source('silver', 'cs_training')
-    -- Usamos un dummy hasta que el pipeline Silver para este banco esté activo
-    FROM (SELECT 1 as "Unnamed: 0", 30 as age LIMIT 0) AS dummy
+        cast(age as integer) as age_years,
+        cast(null as integer) as employment_years,
+        cast(null as varchar) as gender
+    FROM {{ ref('int_give_me_some_credit_consolidated') }}
+),
+
+loan_prediction AS (
+    SELECT
+        to_hex(md5(to_utf8(cast(loan_id as varchar)))) as customer_key,
+        cast(loan_id as varchar) as customer_id,
+        'Loan Prediction' as source_system,
+        cast(null as integer) as age_years,
+        cast(null as integer) as employment_years,
+        cast(gender as varchar) as gender
+    FROM {{ ref('int_loan_prediction_consolidated') }}
 )
 
-SELECT * FROM home_credit
+SELECT customer_key, customer_id, source_system, age_years, cast(employment_years as varchar) as employment_years, gender FROM home_credit
 UNION ALL
-SELECT * FROM give_me_some_credit
+SELECT customer_key, customer_id, source_system, age_years, employment_years_str as employment_years, gender FROM lending_club
+UNION ALL
+SELECT customer_key, customer_id, source_system, age_years, cast(employment_years as varchar) as employment_years, gender FROM give_me_some_credit
+UNION ALL
+SELECT customer_key, customer_id, source_system, age_years, cast(employment_years as varchar) as employment_years, gender FROM loan_prediction

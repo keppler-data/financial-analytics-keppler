@@ -8,58 +8,45 @@
 
 WITH home_credit AS (
     SELECT 
-        md5(concat(cast(sk_id_curr as varchar), 'HC')) as loan_key,
-        md5(cast(sk_id_curr as varchar)) as customer_key,
+        to_hex(md5(to_utf8(concat(cast(sk_id_curr as varchar), 'HC')))) as loan_key,
+        to_hex(md5(to_utf8(cast(sk_id_curr as varchar)))) as customer_key,
         'Home Credit' as source_system,
         is_default as target,
-        
-        -- Business Mappings
-        cast(AMT_CREDIT as double) as loan_amount,
-        cast(AMT_INCOME_TOTAL as double) as annual_income,
-        cast(DAYS_BIRTH / -365.0 as integer) as age_years
-        
+        cast(amt_credit as double) as loan_amount,
+        cast(amt_income_total as double) as annual_income
     FROM {{ ref('int_home_credit_consolidated') }}
 ),
 
 lending_club AS (
     SELECT 
-        md5(concat(cast(id as varchar), 'LC')) as loan_key,
-        md5(cast(emp_title as varchar)) as customer_key, -- Proxy since there is no customer id
+        to_hex(md5(to_utf8(concat(cast(id as varchar), 'LC')))) as loan_key,
+        to_hex(md5(to_utf8(cast(emp_title as varchar)))) as customer_key,
         'Lending Club' as source_system,
         is_default as target,
-        
         cast(loan_amnt as double) as loan_amount,
-        cast(annual_inc as double) as annual_income,
-        cast(null as integer) as age_years
-        
+        cast(annual_inc as double) as annual_income
     FROM {{ ref('int_lending_club_consolidated') }}
 ),
 
 give_me_some_credit AS (
     SELECT
-        md5(concat(cast("Unnamed: 0" as varchar), 'GMSC')) as loan_key,
-        md5(cast("Unnamed: 0" as varchar)) as customer_key,
+        to_hex(md5(to_utf8(concat(cast(unnamed_0 as varchar), 'GMSC')))) as loan_key,
+        to_hex(md5(to_utf8(cast(unnamed_0 as varchar)))) as customer_key,
         'Give Me Some Credit' as source_system,
         is_default as target,
-        
         cast(null as double) as loan_amount,
-        cast(MonthlyIncome * 12 as double) as annual_income,
-        cast(age as integer) as age_years
-        
+        cast(monthlyincome * 12 as double) as annual_income
     FROM {{ ref('int_give_me_some_credit_consolidated') }}
 ),
 
 loan_prediction AS (
     SELECT
-        md5(concat(cast(Loan_ID as varchar), 'LP')) as loan_key,
-        md5(cast(Loan_ID as varchar)) as customer_key,
+        to_hex(md5(to_utf8(concat(cast(loan_id as varchar), 'LP')))) as loan_key,
+        to_hex(md5(to_utf8(cast(loan_id as varchar)))) as customer_key,
         'Loan Prediction' as source_system,
         is_default as target,
-        
-        cast(LoanAmount * 1000 as double) as loan_amount,
-        cast(ApplicantIncome * 12 as double) as annual_income,
-        cast(null as integer) as age_years
-        
+        cast(loanamount * 1000 as double) as loan_amount,
+        cast(applicantincome * 12 as double) as annual_income
     FROM {{ ref('int_loan_prediction_consolidated') }}
 )
 
