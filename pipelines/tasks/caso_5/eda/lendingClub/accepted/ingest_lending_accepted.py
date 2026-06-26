@@ -1,8 +1,8 @@
-from pipelines.tasks.lendingClub.download_task import (
+from pipelines.tasks.caso_5.eda.lendingClub.download_task import (
     download_lending_club,
 )
 
-from pipelines.tasks.lendingClub.accepted.parquet_task import (
+from pipelines.tasks.caso_5.eda.lendingClub.accepted.parquet_task import (
     convert_lending_accepted_to_parquet,
 )
 
@@ -14,7 +14,7 @@ from pipelines.utils.s3.validate import (
     validate_s3_upload,
 )
 
-from pipelines.tasks.lendingClub.cleanup_task import (
+from pipelines.tasks.caso_5.eda.lendingClub.cleanup_task import (
     cleanup_lending_club,
 )
 

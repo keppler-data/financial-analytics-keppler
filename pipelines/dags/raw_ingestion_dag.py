@@ -43,7 +43,7 @@ CeleryExecutor.
 import sys 
 
 sys.path.append(
-    "/opt/airflow/data-platform"
+    "/opt/airflow"
 )
 
 from airflow.sdk import dag, task
@@ -54,11 +54,11 @@ from pipelines.tasks.caso_5.eda.homeCredit.ingestion_task import (
     ingest_home_credit,
 )
 
-from pipelines.tasks.lendingClub.accepted import (
+from pipelines.tasks.caso_5.eda.lendingClub.accepted.ingest_lending_accepted import (
     ingest_lending_accepted,
 )
 
-from pipelines.tasks.lendingClub.rejected import (
+from pipelines.tasks.caso_5.eda.lendingClub.rejected.ingest_lending_rejected import (
     ingest_lending_rejected,
 )
 

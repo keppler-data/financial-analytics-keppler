@@ -144,7 +144,7 @@ def _calcular_hash_fila(fila: pd.Series) -> str:
     str
         Cadena hexadecimal de 32 caracteres correspondiente al hash MD5.
     """
-    valores = fila.sort_index().astype(str).tolist()
+    valores = fila.sort_index().map(str).tolist()
     cadena = "|".join(valores)
     return hashlib.md5(cadena.encode("utf-8")).hexdigest()
 

@@ -9,16 +9,19 @@ Las métricas se exportan como JSON que el metrics-exporter lee y expone
 en formato Prometheus para que Grafana las consuma.
 """
 
+import sys
+sys.path.append("/opt/airflow")
+
 from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
 from ml.training.scoring_baseline import train_scoring_baseline
-from pipelines.tasks.bronze_tasks import ingest_all_bronze
-from pipelines.tasks.gold_tasks import build_gold_customer_360
-from pipelines.tasks.intermediate_tasks import build_all_intermediate
-from pipelines.tasks.silver_tasks import transform_all_silver
+from pipelines.tasks.caso_5.bronze_tasks import ingest_all_bronze
+from pipelines.tasks.caso_5.gold_tasks import build_gold_customer_360
+from pipelines.tasks.caso_5.intermediate_tasks import build_all_intermediate
+from pipelines.tasks.caso_5.silver_tasks import transform_all_silver
 from quality.data_quality_report import run_quality_checks
 
 default_args = {

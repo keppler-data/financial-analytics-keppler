@@ -44,9 +44,9 @@ def sample_app_train_df():
 
 class TestBronzeTasks:
 
-    @patch("pipelines.tasks.bronze_tasks.os.path.isfile", return_value=True)
-    @patch("pipelines.tasks.bronze_tasks._obtener_ruta_bronze", return_value="/tmp/bronze")
-    @patch("pipelines.tasks.bronze_tasks._obtener_ruta_seed", return_value="/tmp/seed")
+    @patch("pipelines.tasks.caso_5.bronze_tasks.os.path.isfile", return_value=True)
+    @patch("pipelines.tasks.caso_5.bronze_tasks._obtener_ruta_bronze", return_value="/tmp/bronze")
+    @patch("pipelines.tasks.caso_5.bronze_tasks._obtener_ruta_seed", return_value="/tmp/seed")
     def test_ingest_bronze_dataset_creates_parquet(
         self,
         mock_seed_dir,
@@ -55,14 +55,14 @@ class TestBronzeTasks:
         sample_app_train_df,
     ):
         """Verify to_parquet is called with correct path and compression='snappy'."""
-        with patch("pipelines.tasks.bronze_tasks._leer_csv_con_deteccion_codificacion",
+        with patch("pipelines.tasks.caso_5.bronze_tasks._leer_csv_con_deteccion_codificacion",
                     return_value=sample_app_train_df), \
-             patch("pipelines.tasks.bronze_tasks._agregar_columnas_tecnicas",
+             patch("pipelines.tasks.caso_5.bronze_tasks._agregar_columnas_tecnicas",
                    return_value=sample_app_train_df), \
-             patch("pipelines.tasks.bronze_tasks.os.makedirs"), \
+             patch("pipelines.tasks.caso_5.bronze_tasks.os.makedirs"), \
              patch.object(pd.DataFrame, "to_parquet") as mock_to_parquet:
 
-            from pipelines.tasks.bronze_tasks import ingest_bronze_dataset
+            from pipelines.tasks.caso_5.bronze_tasks import ingest_bronze_dataset
 
             result = ingest_bronze_dataset("application_train", "application_train.csv")
 
@@ -74,9 +74,9 @@ class TestBronzeTasks:
         assert result["dataset"] == "application_train"
         assert result["output_path"].endswith("application_train.parquet")
 
-    @patch("pipelines.tasks.bronze_tasks.os.path.isfile", return_value=True)
-    @patch("pipelines.tasks.bronze_tasks._obtener_ruta_bronze", return_value="/tmp/bronze")
-    @patch("pipelines.tasks.bronze_tasks._obtener_ruta_seed", return_value="/tmp/seed")
+    @patch("pipelines.tasks.caso_5.bronze_tasks.os.path.isfile", return_value=True)
+    @patch("pipelines.tasks.caso_5.bronze_tasks._obtener_ruta_bronze", return_value="/tmp/bronze")
+    @patch("pipelines.tasks.caso_5.bronze_tasks._obtener_ruta_seed", return_value="/tmp/seed")
     def test_ingest_bronze_dataset_adds_metadata_columns(
         self,
         mock_seed_dir,
@@ -85,9 +85,9 @@ class TestBronzeTasks:
         sample_app_train_df,
     ):
         """Verify the output df has metadata columns added by _agregar_columnas_tecnicas."""
-        with patch("pipelines.tasks.bronze_tasks._leer_csv_con_deteccion_codificacion",
+        with patch("pipelines.tasks.caso_5.bronze_tasks._leer_csv_con_deteccion_codificacion",
                     return_value=sample_app_train_df), \
-             patch("pipelines.tasks.bronze_tasks.os.makedirs"):
+             patch("pipelines.tasks.caso_5.bronze_tasks.os.makedirs"):
 
             captured_df = {}
 
@@ -96,7 +96,7 @@ class TestBronzeTasks:
                 return None
 
             with patch.object(pd.DataFrame, "to_parquet", capture_to_parquet):
-                from pipelines.tasks.bronze_tasks import ingest_bronze_dataset
+                from pipelines.tasks.caso_5.bronze_tasks import ingest_bronze_dataset
                 ingest_bronze_dataset("application_train", "application_train.csv")
 
         df = captured_df["df"]
@@ -107,9 +107,9 @@ class TestBronzeTasks:
         assert df["_source_file"].iloc[0] == "application_train.csv"
         assert df["_dataset_name"].iloc[0] == "application_train"
 
-    @patch("pipelines.tasks.bronze_tasks.os.path.isfile", return_value=False)
-    @patch("pipelines.tasks.bronze_tasks._obtener_ruta_bronze", return_value="/tmp/bronze")
-    @patch("pipelines.tasks.bronze_tasks._obtener_ruta_seed", return_value="/tmp/seed")
+    @patch("pipelines.tasks.caso_5.bronze_tasks.os.path.isfile", return_value=False)
+    @patch("pipelines.tasks.caso_5.bronze_tasks._obtener_ruta_bronze", return_value="/tmp/bronze")
+    @patch("pipelines.tasks.caso_5.bronze_tasks._obtener_ruta_seed", return_value="/tmp/seed")
     def test_ingest_bronze_dataset_file_not_found(
         self,
         mock_seed_dir,
@@ -117,16 +117,16 @@ class TestBronzeTasks:
         mock_isfile,
     ):
         """When the CSV doesn't exist, result should have rows=0 and empty output_path."""
-        from pipelines.tasks.bronze_tasks import ingest_bronze_dataset
+        from pipelines.tasks.caso_5.bronze_tasks import ingest_bronze_dataset
 
         result = ingest_bronze_dataset("application_train", "application_train.csv")
 
         assert result["rows"] == 0
         assert result["output_path"] == ""
 
-    @patch("pipelines.tasks.bronze_tasks.os.path.isfile", return_value=True)
-    @patch("pipelines.tasks.bronze_tasks._obtener_ruta_bronze", return_value="/tmp/bronze")
-    @patch("pipelines.tasks.bronze_tasks._obtener_ruta_seed", return_value="/tmp/seed")
+    @patch("pipelines.tasks.caso_5.bronze_tasks.os.path.isfile", return_value=True)
+    @patch("pipelines.tasks.caso_5.bronze_tasks._obtener_ruta_bronze", return_value="/tmp/bronze")
+    @patch("pipelines.tasks.caso_5.bronze_tasks._obtener_ruta_seed", return_value="/tmp/seed")
     def test_ingest_bronze_dataset_empty_csv(
         self,
         mock_seed_dir,
@@ -134,10 +134,10 @@ class TestBronzeTasks:
         mock_isfile,
     ):
         """When the CSV raises EmptyDataError, result should have rows=0."""
-        with patch("pipelines.tasks.bronze_tasks._leer_csv_con_deteccion_codificacion",
+        with patch("pipelines.tasks.caso_5.bronze_tasks._leer_csv_con_deteccion_codificacion",
                     side_effect=pd.errors.EmptyDataError("No columns to parse")):
 
-            from pipelines.tasks.bronze_tasks import ingest_bronze_dataset
+            from pipelines.tasks.caso_5.bronze_tasks import ingest_bronze_dataset
 
             result = ingest_bronze_dataset("application_train", "application_train.csv")
 
@@ -177,8 +177,8 @@ class TestSilverTasks:
             ]
         return pd.DataFrame(rows)
 
-    @patch("pipelines.tasks.silver_tasks._escribir_silver", return_value="/tmp/silver/application_train")
-    @patch("pipelines.tasks.silver_tasks._leer_bronze")
+    @patch("pipelines.tasks.caso_5.silver_tasks._escribir_silver", return_value="/tmp/silver/application_train")
+    @patch("pipelines.tasks.caso_5.silver_tasks._leer_bronze")
     def test_silver_deduplicates_on_primary_key(
         self, mock_leer_bronze, mock_escribir_silver
     ):
@@ -214,7 +214,7 @@ class TestSilverTasks:
         ])
         mock_leer_bronze.return_value = df
 
-        from pipelines.tasks.silver_tasks import transform_to_silver
+        from pipelines.tasks.caso_5.silver_tasks import transform_to_silver
 
         stats = transform_to_silver("application_train")
 
@@ -222,8 +222,8 @@ class TestSilverTasks:
         assert stats["rows_out"] == 2
         assert stats["duplicates_removed"] == 1
 
-    @patch("pipelines.tasks.silver_tasks._escribir_silver", return_value="/tmp/silver/application_train")
-    @patch("pipelines.tasks.silver_tasks._leer_bronze")
+    @patch("pipelines.tasks.caso_5.silver_tasks._escribir_silver", return_value="/tmp/silver/application_train")
+    @patch("pipelines.tasks.caso_5.silver_tasks._leer_bronze")
     def test_silver_handles_days_employed_anomaly(
         self, mock_leer_bronze, mock_escribir_silver
     ):
@@ -252,7 +252,7 @@ class TestSilverTasks:
         ])
         mock_leer_bronze.return_value = df
 
-        from pipelines.tasks.silver_tasks import transform_to_silver
+        from pipelines.tasks.caso_5.silver_tasks import transform_to_silver
 
         captured = {}
 
@@ -269,8 +269,8 @@ class TestSilverTasks:
         # Row 1: normal value preserved
         assert result_df.loc[result_df["SK_ID_CURR"] == 100002, "DAYS_EMPLOYED"].iloc[0] == -1189
 
-    @patch("pipelines.tasks.silver_tasks._escribir_silver", return_value="/tmp/silver/application_train")
-    @patch("pipelines.tasks.silver_tasks._leer_bronze")
+    @patch("pipelines.tasks.caso_5.silver_tasks._escribir_silver", return_value="/tmp/silver/application_train")
+    @patch("pipelines.tasks.caso_5.silver_tasks._leer_bronze")
     def test_silver_handles_name_type_suite_null(
         self, mock_leer_bronze, mock_escribir_silver
     ):
@@ -297,7 +297,7 @@ class TestSilverTasks:
         ])
         mock_leer_bronze.return_value = df
 
-        from pipelines.tasks.silver_tasks import transform_to_silver
+        from pipelines.tasks.caso_5.silver_tasks import transform_to_silver
 
         captured = {}
 
@@ -314,8 +314,8 @@ class TestSilverTasks:
         ].iloc[0]
         assert name_suite_val == "Unaccompanied"
 
-    @patch("pipelines.tasks.silver_tasks._escribir_silver", return_value="/tmp/silver/application_train")
-    @patch("pipelines.tasks.silver_tasks._leer_bronze")
+    @patch("pipelines.tasks.caso_5.silver_tasks._escribir_silver", return_value="/tmp/silver/application_train")
+    @patch("pipelines.tasks.caso_5.silver_tasks._leer_bronze")
     def test_silver_preserves_valid_data(
         self, mock_leer_bronze, mock_escribir_silver
     ):
@@ -323,7 +323,7 @@ class TestSilverTasks:
         df = self._make_bronze_df()
         mock_leer_bronze.return_value = df
 
-        from pipelines.tasks.silver_tasks import transform_to_silver
+        from pipelines.tasks.caso_5.silver_tasks import transform_to_silver
 
         captured = {}
 
@@ -341,10 +341,10 @@ class TestSilverTasks:
         assert result_df.loc[result_df["SK_ID_CURR"] == 100001, "TARGET"].iloc[0] == 1
         assert result_df.loc[result_df["SK_ID_CURR"] == 100002, "TARGET"].iloc[0] == 0
 
-    @patch("pipelines.tasks.silver_tasks._leer_bronze", return_value=None)
+    @patch("pipelines.tasks.caso_5.silver_tasks._leer_bronze", return_value=None)
     def test_silver_returns_empty_stats_when_no_bronze_data(self, mock_leer_bronze):
         """When Bronze has no data, stats should reflect zero rows."""
-        from pipelines.tasks.silver_tasks import transform_to_silver
+        from pipelines.tasks.caso_5.silver_tasks import transform_to_silver
 
         stats = transform_to_silver("application_train")
 
@@ -354,7 +354,7 @@ class TestSilverTasks:
 
     def test_silver_raises_on_unknown_dataset(self):
         """Unregistered dataset name should raise ValueError."""
-        from pipelines.tasks.silver_tasks import transform_to_silver
+        from pipelines.tasks.caso_5.silver_tasks import transform_to_silver
 
         with pytest.raises(ValueError, match="no registrado"):
             transform_to_silver("nonexistent_dataset")
@@ -402,10 +402,10 @@ class TestGoldTasks:
             "avg_payment_delay": [2.5, 5.0],
         })
 
-    @patch("pipelines.tasks.gold_tasks.os.makedirs")
-    @patch("pipelines.tasks.gold_tasks.pd.read_parquet")
-    @patch("pipelines.tasks.gold_tasks.os.listdir")
-    @patch("pipelines.tasks.gold_tasks.os.path.exists")
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.makedirs")
+    @patch("pipelines.tasks.caso_5.gold_tasks.pd.read_parquet")
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.listdir")
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.path.exists")
     def test_gold_customer_360_joins_tables(
         self,
         mock_exists,
@@ -441,7 +441,7 @@ class TestGoldTasks:
 
         with patch.object(pd.DataFrame, "to_parquet", capture_to_parquet), \
              patch.dict(os.environ, {"SILVER_DIR": "/tmp/s", "INTERMEDIATE_DIR": "/tmp/i", "GOLD_DIR": "/tmp/g"}, clear=False):
-            from pipelines.tasks.gold_tasks import build_gold_customer_360
+            from pipelines.tasks.caso_5.gold_tasks import build_gold_customer_360
             result = build_gold_customer_360()
 
         gold_df = captured["df"]
@@ -451,10 +451,10 @@ class TestGoldTasks:
         assert "total_installments_install" in gold_df.columns or "total_installments" in gold_df.columns
         assert result["rows"] == 3
 
-    @patch("pipelines.tasks.gold_tasks.os.makedirs")
-    @patch("pipelines.tasks.gold_tasks.pd.read_parquet")
-    @patch("pipelines.tasks.gold_tasks.os.listdir", return_value=["application_train.parquet"])
-    @patch("pipelines.tasks.gold_tasks.os.path.exists", return_value=True)
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.makedirs")
+    @patch("pipelines.tasks.caso_5.gold_tasks.pd.read_parquet")
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.listdir", return_value=["application_train.parquet"])
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.path.exists", return_value=True)
     def test_gold_adds_computed_columns(
         self,
         mock_exists,
@@ -474,7 +474,7 @@ class TestGoldTasks:
 
         with patch.object(pd.DataFrame, "to_parquet", capture_to_parquet), \
              patch.dict(os.environ, {"SILVER_DIR": "/tmp/s", "INTERMEDIATE_DIR": "/tmp/i", "GOLD_DIR": "/tmp/g"}, clear=False):
-            from pipelines.tasks.gold_tasks import build_gold_customer_360
+            from pipelines.tasks.caso_5.gold_tasks import build_gold_customer_360
             build_gold_customer_360()
 
         gold_df = captured["df"]
@@ -482,10 +482,10 @@ class TestGoldTasks:
         assert "credit_to_income_ratio" in gold_df.columns
         assert "risk_segment" in gold_df.columns
 
-    @patch("pipelines.tasks.gold_tasks.os.makedirs")
-    @patch("pipelines.tasks.gold_tasks.pd.read_parquet")
-    @patch("pipelines.tasks.gold_tasks.os.listdir")
-    @patch("pipelines.tasks.gold_tasks.os.path.exists")
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.makedirs")
+    @patch("pipelines.tasks.caso_5.gold_tasks.pd.read_parquet")
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.listdir")
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.path.exists")
     def test_gold_risk_segment_logic(
         self,
         mock_exists,
@@ -529,7 +529,7 @@ class TestGoldTasks:
 
         with patch.object(pd.DataFrame, "to_parquet", capture_to_parquet), \
              patch.dict(os.environ, {"SILVER_DIR": "/tmp/s", "INTERMEDIATE_DIR": "/tmp/i", "GOLD_DIR": "/tmp/g"}, clear=False):
-            from pipelines.tasks.gold_tasks import build_gold_customer_360
+            from pipelines.tasks.caso_5.gold_tasks import build_gold_customer_360
             build_gold_customer_360()
 
         gold_df = captured["df"]
@@ -550,11 +550,11 @@ class TestGoldTasks:
         segments = np.select(conditions, choices, default="HIGH_RISK")
         assert list(segments) == ["LOW_RISK","MEDIUM_RISK","HIGH_RISK"]
 
-    @patch("pipelines.tasks.gold_tasks.os.path.exists", return_value=False)
-    @patch("pipelines.tasks.gold_tasks.os.listdir", return_value=[])
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.path.exists", return_value=False)
+    @patch("pipelines.tasks.caso_5.gold_tasks.os.listdir", return_value=[])
     def test_gold_returns_empty_when_no_silver_data(self, mock_listdir, mock_exists):
         """When no silver data found, result should have rows=0."""
-        from pipelines.tasks.gold_tasks import build_gold_customer_360
+        from pipelines.tasks.caso_5.gold_tasks import build_gold_customer_360
 
         result = build_gold_customer_360()
 
