@@ -63,7 +63,7 @@ with DAG(
             
             # Comando que ejecuta spark-submit dentro del contenedor core-spark-master
             spark_command = f"""
-            docker exec -e HADOOP_USER_NAME=ubuntu -e AWS_DEFAULT_REGION=us-east-1 core-spark-master /opt/spark/bin/spark-submit \\
+            docker exec core-spark-master /opt/spark/bin/spark-submit \\
                 --packages org.apache.hadoop:hadoop-aws:3.4.0,com.amazonaws:aws-java-sdk-bundle:1.12.367 \\
                 --conf spark.driver.port=7078 \\
                 --conf spark.driver.blockManager.port=7079 \\
@@ -75,7 +75,7 @@ with DAG(
                 --bronze-bucket {bronze_bucket} \\
                 --silver-bucket {silver_bucket} \\
                 --dataset-name {dataset_name} \\
-                --file-name {file_name} 2>&1
+                --file-name {file_name}
             """
 
             task = SSHOperator(
