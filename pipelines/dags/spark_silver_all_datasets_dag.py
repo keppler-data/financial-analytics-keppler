@@ -51,8 +51,8 @@ with DAG(
     description='Transforma todos los CSV/GZ de Bronze a Parquet (Silver) usando Spark (Idempotente)',
     schedule=None,
     catchup=False,
-    # max_active_tasks=1 crea nuestro "Súper DAG" secuencial para no ahogar el clúster
-    max_active_tasks=1,
+    # max_active_tasks=2 permite que Airflow envíe 2 archivos al mismo tiempo
+    max_active_tasks=2,
     tags=['transformation', 'silver', 'spark', 'all_datasets', 'ssh'],
 ) as dag:
 
@@ -67,7 +67,7 @@ with DAG(
                 --packages org.apache.hadoop:hadoop-aws:3.4.0,com.amazonaws:aws-java-sdk-bundle:1.12.367 \\
                 --conf spark.jars.ivy=/opt/spark/work/.ivy \\
                 --conf "spark.driver.host=21.0.2.203" \\
-                --total-executor-cores 10 \\
+                --total-executor-cores 5 \\
                 --executor-memory 1500M \\
                 --master spark://21.0.2.203:7077 \\
                 /opt/spark/pipelines/tasks-spark/caso_5/silver/bronze_to_silver_transform.py \\
