@@ -67,6 +67,9 @@ with DAG(
                 --packages org.apache.hadoop:hadoop-aws:3.4.0,com.amazonaws:aws-java-sdk-bundle:1.12.367 \\
                 --driver-java-options "-Duser.name=ubuntu" \\
                 --conf "spark.executor.extraJavaOptions=-Duser.name=ubuntu" \\
+                --conf "spark.driver.host=21.0.2.203" \\
+                --conf "spark.executorEnv.SPARK_USER=ubuntu" \\
+                --conf "spark.executorEnv.HADOOP_USER_NAME=ubuntu" \\
                 --conf spark.driver.port=7078 \\
                 --conf spark.driver.blockManager.port=7079 \\
                 --conf spark.blockManager.port=37000 \\
