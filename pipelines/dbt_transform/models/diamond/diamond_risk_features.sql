@@ -29,4 +29,4 @@ SELECT
     -- Por ahora traemos todo para evitar que dbt falle al compilar
     *
 
-FROM {{ ref('fct_home_credit_consolidated') }}
+FROM {{ ref('int_home_credit_consolidated') }}

@@ -28,11 +28,10 @@ def build_spark_command(dataset_name, intermediate_folder):
         --total-executor-cores 10 \\
         --executor-memory 1500M \\
         --master spark://21.0.2.203:7077 \\
-        /opt/spark/pipelines/tasks-spark/caso_5/diamond/intermediate_feature_selection.py \\
+        /opt/spark/pipelines/tasks-spark/caso_5/ml/feature_discovery.py \\
         --intermediate-path s3a://{silver_bucket}/intermediate/{intermediate_folder}/ \\
-        --diamond-path s3a://{diamond_bucket}/diamond/{dataset_name}_refined/ \\
-        --report-path s3a://{diamond_bucket}/reports/diamond/{dataset_name}_ml_report.md \\
-        --json-path s3a://{diamond_bucket}/reports/diamond/{dataset_name}_ml_features.json \\
+        --report-path s3a://{diamond_bucket}/reports/ml/{dataset_name}_ml_report.md \\
+        --json-path s3a://{diamond_bucket}/reports/ml/{dataset_name}_ml_features.json \\
         --target-col is_default
     """
 
