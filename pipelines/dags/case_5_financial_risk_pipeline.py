@@ -1,3 +1,4 @@
+a 
 # -*- coding: utf-8 -*-
 """
 DAG Principal — Caso 5: Financial Risk Pipeline
@@ -7,6 +8,33 @@ Bronze -> Silver -> Intermediate -> Gold -> Quality -> Scoring -> Export Metrics
 
 Las métricas se exportan como JSON que el metrics-exporter lee y expone
 en formato Prometheus para que Grafana las consuma.
+
+Notas de la corrección
+-----------------------
+Los imports originales apuntaban a:
+    - ml.training.scoring_baseline   -> 'ml' NO tiene volumen montado en
+                                         el contenedor (vive en la raíz del
+                                         repo, fuera de pipelines/), por lo
+                                         que siempre fallaba con
+                                         ModuleNotFoundError: No module named 'ml'.
+    - quality.data_quality_report     -> 'quality' real está DENTRO de
+                                         pipelines/ (pipelines/quality/),
+                                         no en la raíz, por lo que el import
+                                         también fallaba.
+
+Se corrigen ambos imports para apuntar a pipelines/, que es el único
+paquete con volumen montado en /opt/airflow/pipelines:
+    - pipelines.tasks.caso_5.scoring_baseline   (mover aquí el contenido
+      de ml/training/scoring_baseline.py)
+    - pipelines.quality.data_quality_report     (ya existe en esa ruta)
+
+ACCIÓN REQUERIDA DE TU PARTE:
+    Debes mover físicamente el archivo
+        ml/training/scoring_baseline.py
+    hacia
+        pipelines/tasks/caso_5/scoring_baseline.py
+    (o la ruta de import de abajo debe ajustarse a donde finalmente lo
+    dejes, siempre dentro de pipelines/, que es lo único montado).
 """
 
 import sys
@@ -17,12 +45,16 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
-from ml.training.scoring_baseline import train_scoring_baseline
+# --- CORREGIDO: ya no se importa desde 'ml.training...' (no montado) ---
+from pipelines.tasks.caso_5.scoring_baseline import train_scoring_baseline
+
 from pipelines.tasks.caso_5.bronze_tasks import ingest_all_bronze
 from pipelines.tasks.caso_5.gold_tasks import build_gold_customer_360
 from pipelines.tasks.caso_5.intermediate_tasks import build_all_intermediate
 from pipelines.tasks.caso_5.silver_tasks import transform_all_silver
-from quality.data_quality_report import run_quality_checks
+
+# --- CORREGIDO: 'quality' real vive dentro de pipelines/quality/ ---
+from pipelines.quality.data_quality_report import run_quality_checks
 
 default_args = {
     "owner": "data-team",
