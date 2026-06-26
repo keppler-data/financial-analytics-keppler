@@ -103,7 +103,8 @@ def main():
         .getOrCreate()
 
     # AWS Credentials y Configuración S3
-    spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.aws.credentials.provider", "com.amazonaws.auth.DefaultAWSCredentialsProviderChain")
+    # Delegamos a la cadena por defecto de Hadoop S3A que detecta los IAM Roles de EC2 automáticamente
+    # spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.aws.credentials.provider", "com.amazonaws.auth.DefaultAWSCredentialsProviderChain")
     spark.sparkContext._jsc.hadoopConfiguration().set("fs.s3a.endpoint", "s3.amazonaws.com")
 
     bronze_path = f"s3a://{args.bronze_bucket}/bronze/{args.dataset_name}/{args.file_name}"
