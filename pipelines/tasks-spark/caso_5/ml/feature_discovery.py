@@ -42,18 +42,42 @@ def main():
     if args.target_col not in df.columns:
         print(f"ERROR: La tabla no tiene la columna target '{args.target_col}'.")
         spark.stop()
-        return
+        import sys
+        sys.exit(1)
 
     # Filter out null targets
     df = df.filter(col(args.target_col).isNotNull())
+    
+    from pyspark.sql.functions import sum as spark_sum
     
     # 2. Select numeric columns for ML
     numeric_types = ["integer", "long", "double", "float"]
     numeric_cols = [f.name for f in df.schema.fields if f.dataType.typeName() in numeric_types and f.name != args.target_col]
     
+    total_rows = df.count()
+    if total_rows == 0:
+        print("ERROR: El DataFrame está vacío después de filtrar el target.")
+        spark.stop()
+        import sys
+        sys.exit(1)
+        
+    print(f"Calculando nulos para {len(numeric_cols)} columnas numéricas...")
+    null_exprs = [spark_sum(col(c).isNull().cast("int")).alias(c) for c in numeric_cols]
+    null_counts = df.select(*null_exprs).collect()[0].asDict()
+    
+    valid_numeric_cols = [c for c, null_cnt in null_counts.items() if null_cnt < total_rows]
+    
+    if len(valid_numeric_cols) == 0:
+        print("ERROR: No hay columnas numéricas válidas (todas son 100% nulas).")
+        spark.stop()
+        import sys
+        sys.exit(1)
+        
+    print(f"Se eliminaron {len(numeric_cols) - len(valid_numeric_cols)} columnas que eran 100% nulas.")
+    
     # 3. Handle Nulls in features using Imputer (Random Forest in MLlib needs no nulls)
-    imputed_cols = [c + "_imputed" for c in numeric_cols]
-    imputer = Imputer(inputCols=numeric_cols, outputCols=imputed_cols).setStrategy("median")
+    imputed_cols = [c + "_imputed" for c in valid_numeric_cols]
+    imputer = Imputer(inputCols=valid_numeric_cols, outputCols=imputed_cols).setStrategy("median")
     df_imputed = imputer.fit(df).transform(df)
 
     # 4. Assemble Features
@@ -61,7 +85,7 @@ def main():
     df_assembled = assembler.transform(df_imputed)
 
     # 5. Train Random Forest with up to 1,000,000 rows
-    total_rows = df_assembled.count()
+    # total_rows ya está calculado arriba
     fraction = 1.0 if total_rows <= 1000000 else 1000000.0 / total_rows
     df_sample = df_assembled.sample(withReplacement=False, fraction=fraction, seed=42)
 
@@ -71,7 +95,7 @@ def main():
 
     # 6. Extract Feature Importance
     importances = rf_model.featureImportances.toArray()
-    feature_imp = [(numeric_cols[i], float(importances[i])) for i in range(len(numeric_cols))]
+    feature_imp = [(valid_numeric_cols[i], float(importances[i])) for i in range(len(valid_numeric_cols))]
     feature_imp.sort(key=lambda x: x[1], reverse=True)
 
     # Top 20 features + target + ID (assuming anything with 'id' is identifier)
