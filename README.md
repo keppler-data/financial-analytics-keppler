@@ -203,27 +203,7 @@ Examples:
 * Portfolio Risk Indicators
 * Risk Scoring Views
 
----
-
-## Machine Learning
-
-Consumes Diamond assets and analytical datasets.
-
-Responsibilities:
-
-* Training
-* Evaluation
-* Inference
-* Monitoring
-
-Potential use cases:
-
-* Credit Default Prediction
-* Risk Classification
-* Customer Segmentation
-* Portfolio Risk Scoring
-
----
+![Dashboard Financial Risks](dashboard/financial_risks.png)
 
 ## Quality
 
