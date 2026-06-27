@@ -229,13 +229,6 @@ La plataforma incluye **4 dashboards de Grafana** que se provisionan automática
 | **ML Model Metrics** | `model-metrics-caso5` | AUC/Accuracy/F1 por modelo, comparación LR vs RF, segmentación de riesgo (pie chart) |
 | **Risk Segmentation** | `risk-segmentation-caso5` | Distribución LOW/MEDIUM/HIGH_RISK, gauge de riesgo alto, tendencia de calidad |
 
-### Cómo funcionan las métricas
-
-1. El pipeline genera `reports/data_quality_summary.json` y `reports/model_metrics.json`
-2. El **metrics-exporter** (contenedor Docker en puerto 8000) lee estos JSON cada 30 segundos
-3. **Prometheus** scrapea el exporter y almacena las métricas
-4. **Grafana** consulta a Prometheus y muestra los dashboards
-
 ---
 
 ## Estructura de Carpetas
@@ -275,6 +268,9 @@ financial-analytics-keppler/
 │   └── test_pipeline_tasks.py   # 31 tests unitarios
 └── pyproject.toml               # Dependencias del proyecto
 ```
+
+![Dashbord Financial Risks](dashboard/dashboard_financial_risk.png)
+
 
 ---
 
